@@ -1,0 +1,735 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+<title>家物志 · 家庭收纳 Demo</title>
+<style>
+:root{
+  --bg:#F5F5F7; --surface:#FFFFFF; --ink:#1D1D1F; --muted:#86868B;
+  --line:#E8E8ED; --accent:#FF5C1A; --accent-soft:#FFF0E9;
+  --blue:#007AFF; --green:#34C759; --purple:#8E5CFF; --gold:#C9971B; --gold-soft:#FFF7E0;
+  --radius:16px; --radius-s:12px;
+}
+*{box-sizing:border-box;-webkit-tap-highlight-color:transparent;margin:0;padding:0}
+body{
+  font-family:-apple-system,BlinkMacSystemFont,"PingFang SC","Microsoft YaHei",sans-serif;
+  background:#E5E5EA;color:var(--ink);display:flex;justify-content:center;align-items:center;
+  min-height:100vh;line-height:1.5;
+}
+.phone{
+  width:100%;max-width:420px;height:100vh;max-height:880px;background:var(--bg);
+  display:flex;flex-direction:column;position:relative;overflow:hidden;
+  box-shadow:0 20px 60px rgba(0,0,0,.15);
+}
+@media(min-width:460px){.phone{border-radius:40px;border:8px solid #1D1D1F;height:860px}}
+.statusbar{height:44px;flex:0 0 44px;display:flex;align-items:center;justify-content:space-between;padding:0 24px;font-size:13px;font-weight:500;background:var(--bg);z-index:5}
+.statusbar .dots{display:flex;gap:5px;align-items:center}
+.statusbar .dots i{width:5px;height:5px;border-radius:50%;background:var(--ink);display:block}
+.statusbar .bat{width:20px;height:10px;border:1px solid var(--ink);border-radius:3px;position:relative;padding:1px}
+.statusbar .bat::after{content:"";position:absolute;right:-3px;top:3px;width:2px;height:4px;background:var(--ink);border-radius:1px}
+.statusbar .bat b{display:block;height:100%;width:70%;background:var(--ink);border-radius:1px}
+.screen{flex:1;overflow-y:auto;overflow-x:hidden;padding-bottom:78px}
+.screen::-webkit-scrollbar{display:none}
+.page{display:none;padding:8px 20px 24px;animation:fade .25s ease}
+.page.active{display:block}
+@keyframes fade{from{opacity:0;transform:translateY(6px)}to{opacity:1;transform:none}}
+h1{font-size:26px;font-weight:700;letter-spacing:.5px}
+h2{font-size:17px;font-weight:600}
+.sub{font-size:13px;color:var(--muted)}
+.sec-title{font-size:13px;color:var(--muted);margin:22px 0 10px;font-weight:500;display:flex;justify-content:space-between;align-items:center}
+
+.stats{display:grid;grid-template-columns:repeat(3,1fr);gap:10px;margin-top:18px}
+.stat{background:var(--surface);border-radius:var(--radius-s);padding:14px 12px;border:1px solid var(--line)}
+.stat .n{font-size:26px;font-weight:700;line-height:1}
+.stat .l{font-size:11px;color:var(--muted);margin-top:7px}
+.stat.a .n{color:var(--accent)}
+.stat.b .n{color:var(--blue)}
+.stat.g .n{color:var(--green)}
+
+.search{display:flex;align-items:center;gap:9px;background:var(--surface);border:1px solid var(--line);border-radius:var(--radius-s);padding:11px 14px;margin-top:18px}
+.search svg{flex:0 0 auto;color:var(--muted)}
+.search input{border:none;outline:none;background:transparent;font-size:14px;width:100%;color:var(--ink)}
+.search input::placeholder{color:var(--muted)}
+
+.quick{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-top:12px}
+.qbtn{background:var(--surface);border:1px solid var(--line);border-radius:var(--radius-s);padding:16px;text-align:left;cursor:pointer;transition:.15s}
+.qbtn:active{transform:scale(.97);background:var(--accent-soft)}
+.qbtn .ic{width:34px;height:34px;border-radius:10px;display:flex;align-items:center;justify-content:center;margin-bottom:10px}
+.qbtn .ic.cam{background:var(--accent-soft);color:var(--accent)}
+.qbtn .ic.nfc{background:#E8F1FF;color:var(--blue)}
+.qbtn b{font-size:14px;font-weight:600;display:block}
+.qbtn span{font-size:11px;color:var(--muted)}
+
+.card{background:var(--surface);border:1px solid var(--line);border-radius:var(--radius-s);padding:13px;display:flex;gap:12px;align-items:center;margin-bottom:9px;cursor:pointer;transition:.15s}
+.card:active{transform:scale(.985)}
+.thumb{width:52px;height:52px;border-radius:10px;background:var(--bg);flex:0 0 auto;display:flex;align-items:center;justify-content:center;color:var(--muted);overflow:hidden;font-size:22px}
+.thumb img{width:100%;height:100%;object-fit:cover}
+.card .info{flex:1;min-width:0}
+.card .info b{font-size:14px;font-weight:600;display:block;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.card .info .meta{font-size:12px;color:var(--muted);margin-top:3px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.pill{font-size:10px;padding:3px 8px;border-radius:20px;background:var(--bg);color:var(--muted);white-space:nowrap}
+
+.empty{text-align:center;padding:40px 20px;color:var(--muted)}
+.empty svg{color:var(--line);margin-bottom:12px}
+.empty p{font-size:13px}
+
+.loc{background:var(--surface);border:1px solid var(--line);border-radius:var(--radius-s);margin-bottom:9px;overflow:hidden}
+.loc-head{display:flex;align-items:center;gap:11px;padding:14px;cursor:pointer}
+.loc-head .ic{width:34px;height:34px;border-radius:9px;background:var(--accent-soft);color:var(--accent);display:flex;align-items:center;justify-content:center;flex:0 0 auto}
+.loc-head .ic.room{background:#F0EAFF;color:var(--purple)}
+.loc-head .txt{flex:1}
+.loc-head .txt b{font-size:14px;font-weight:600;display:block}
+.loc-head .txt span{font-size:11px;color:var(--muted)}
+.loc-head .arrow{color:var(--muted);transition:.2s}
+.loc.open .arrow{transform:rotate(90deg)}
+.loc-body{display:none;padding:0 14px 12px}
+.loc.open .loc-body{display:block}
+.subloc{display:flex;align-items:center;gap:9px;padding:10px 0;border-top:1px solid var(--line);font-size:13px;cursor:pointer}
+.subloc .dot{width:7px;height:7px;border-radius:50%;background:var(--line)}
+.subloc .cnt{margin-left:auto;font-size:11px;color:var(--muted)}
+
+.banner{background:linear-gradient(135deg,#FF7A45,#FF5C1A);border-radius:var(--radius);padding:18px;color:#fff;margin-top:8px;position:relative;overflow:hidden}
+.banner h2{font-size:16px;margin-bottom:5px}
+.banner p{font-size:12px;opacity:.92;max-width:230px}
+.banner .big{position:absolute;right:-6px;bottom:-14px;font-size:90px;opacity:.12;font-weight:700}
+
+.scanbox{background:var(--surface);border:1px solid var(--line);border-radius:var(--radius);padding:26px 18px;text-align:center;margin-top:16px}
+.camera-frame{width:100%;aspect-ratio:1;border-radius:var(--radius-s);background:#1D1D1F;position:relative;overflow:hidden;display:flex;align-items:center;justify-content:center;margin-bottom:16px}
+.camera-frame img{width:100%;height:100%;object-fit:cover;opacity:.85}
+.camera-frame .ph{color:#5A5A5E;text-align:center}
+.camera-frame .ph svg{margin-bottom:8px}
+.camera-frame .ph p{font-size:12px}
+.scanline{position:absolute;left:0;right:0;height:3px;background:var(--accent);box-shadow:0 0 18px 3px var(--accent);top:0;animation:scan 1.6s ease-in-out infinite;display:none}
+@keyframes scan{0%,100%{top:4%;opacity:.4}50%{top:92%;opacity:1}}
+.scanning .scanline{display:block}
+
+.btn{border:none;border-radius:14px;padding:15px 20px;font-size:15px;font-weight:600;cursor:pointer;width:100%;font-family:inherit;transition:.15s}
+.btn:active{transform:scale(.98)}
+.btn.primary{background:var(--accent);color:#fff}
+.btn.blue{background:var(--blue);color:#fff}
+.btn.ghost{background:var(--surface);color:var(--ink);border:1px solid var(--line)}
+.btn:disabled{opacity:.4}
+.btn-row{display:flex;gap:10px;margin-top:12px}
+
+.field{margin-top:14px}
+.field label{font-size:12px;color:var(--muted);display:block;margin-bottom:6px}
+.field input,.field select{width:100%;border:1px solid var(--line);background:var(--surface);border-radius:11px;padding:12px 14px;font-size:14px;font-family:inherit;color:var(--ink);outline:none}
+.field input:focus,.field select:focus{border-color:var(--accent)}
+.chips{display:flex;flex-wrap:wrap;gap:8px;margin-top:8px}
+.chip{padding:7px 13px;border-radius:20px;background:var(--bg);border:1px solid var(--line);font-size:12px;cursor:pointer}
+.chip.on{background:var(--accent);color:#fff;border-color:var(--accent)}
+
+.result-tag{display:inline-flex;align-items:center;gap:5px;background:var(--accent-soft);color:var(--accent);font-size:11px;padding:5px 10px;border-radius:20px;margin-bottom:6px}
+
+.nfc-wave{width:130px;height:130px;margin:24px auto;position:relative;display:flex;align-items:center;justify-content:center}
+.nfc-wave .core{width:60px;height:60px;border-radius:50%;background:var(--blue);color:#fff;display:flex;align-items:center;justify-content:center;z-index:2}
+.nfc-wave .ring{position:absolute;border:2px solid var(--blue);border-radius:50%;opacity:0}
+.nfc-wave.active .ring{animation:pulse 1.8s ease-out infinite}
+.nfc-wave .ring:nth-child(2){animation-delay:.5s!important}
+.nfc-wave .ring:nth-child(3){animation-delay:1s!important}
+@keyframes pulse{0%{width:60px;height:60px;opacity:.55}100%{width:130px;height:130px;opacity:0}}
+
+.tip{background:#EBF5FF;border-radius:11px;padding:12px 14px;font-size:12px;color:#0A5BAE;margin-top:14px;display:flex;gap:9px;line-height:1.5}
+.tip.warn{background:#FFF6E9;color:#A85F00}
+
+.advice{background:var(--surface);border:1px solid var(--line);border-radius:var(--radius-s);padding:15px;margin-bottom:10px;display:flex;gap:12px}
+.advice .ic{width:36px;height:36px;border-radius:10px;flex:0 0 auto;display:flex;align-items:center;justify-content:center}
+.advice .ic.r{background:#FFF0E9;color:var(--accent)}
+.advice .ic.y{background:#FFF6E9;color:#E8A200}
+.advice .ic.g{background:#E9F8EE;color:var(--green)}
+.advice b{font-size:13px;font-weight:600;display:block;margin-bottom:4px}
+.advice p{font-size:12px;color:var(--muted);line-height:1.5}
+
+.list-row{display:flex;align-items:center;justify-content:space-between;padding:14px 0;border-bottom:1px solid var(--line);font-size:14px;cursor:pointer}
+.list-row:last-child{border:none}
+.list-row .l{display:flex;align-items:center;gap:10px}
+.list-row .r{color:var(--muted);font-size:12px;display:flex;align-items:center;gap:6px}
+
+.tabbar{position:absolute;bottom:0;left:0;right:0;height:74px;background:rgba(255,255,255,.94);backdrop-filter:blur(20px);border-top:1px solid var(--line);display:flex;align-items:flex-start;padding-top:9px;z-index:10}
+.tab{flex:1;text-align:center;color:var(--muted);cursor:pointer;position:relative}
+.tab svg{margin:0 auto 3px;display:block}
+.tab span{font-size:10px}
+.tab.active{color:var(--accent)}
+.tab.add .plus{width:46px;height:46px;border-radius:50%;background:var(--accent);color:#fff;display:flex;align-items:center;justify-content:center;margin:-22px auto 3px;box-shadow:0 6px 16px rgba(255,92,26,.35)}
+.tab.add span{color:var(--ink);font-weight:500}
+
+.sheet-mask{position:absolute;inset:0;background:rgba(0,0,0,.4);z-index:20;display:none;align-items:flex-end}
+.sheet-mask.show{display:flex}
+.sheet{background:var(--bg);width:100%;border-radius:24px 24px 0 0;padding:20px 20px 30px;max-height:82%;overflow-y:auto;animation:up .28s ease}
+@keyframes up{from{transform:translateY(100%)}to{transform:none}}
+.sheet .grab{width:36px;height:4px;background:var(--line);border-radius:4px;margin:0 auto 18px}
+.sheet h2{margin-bottom:4px}
+.sheet .close{float:right;color:var(--muted);cursor:pointer;font-size:22px;line-height:1}
+
+.toast{position:absolute;top:56px;left:50%;transform:translateX(-50%) translateY(-20px);background:var(--ink);color:#fff;padding:11px 20px;border-radius:24px;font-size:13px;z-index:30;opacity:0;transition:.25s;pointer-events:none;white-space:nowrap}
+.toast.show{opacity:1;transform:translateX(-50%) translateY(0)}
+.badge{display:inline-block;background:var(--accent);color:#fff;font-size:10px;padding:2px 7px;border-radius:10px;margin-left:6px;vertical-align:middle}
+.vip-badge{display:inline-flex;align-items:center;gap:3px;background:linear-gradient(135deg,#F5D78E,#C9971B);color:#5A3E00;font-size:10px;font-weight:600;padding:3px 9px;border-radius:11px}
+.vip-badge.free{background:var(--bg);color:var(--muted)}
+.member-bar{background:linear-gradient(135deg,#2C2C2A,#1D1D1F);border-radius:var(--radius);padding:16px;color:#fff;margin-top:12px;display:flex;align-items:center;justify-content:space-between}
+.member-bar .ml .t{font-size:14px;font-weight:600;display:flex;align-items:center;gap:6px}
+.member-bar .ml .d{font-size:11px;opacity:.65;margin-top:5px}
+.member-bar .btn-mini{background:var(--gold);color:#3A2800;font-size:12px;font-weight:600;padding:8px 14px;border-radius:20px;cursor:pointer;border:none}
+.token-pill{display:inline-flex;align-items:center;gap:4px;background:var(--gold-soft);color:var(--gold);font-size:11px;padding:3px 9px;border-radius:11px;font-weight:600}
+.lock{opacity:.55}
+.lock .ic.cam{background:var(--bg);color:var(--muted)}
+.paywall{background:var(--gold-soft);border:1px solid #F0DC9E;border-radius:var(--radius-s);padding:16px;margin-top:14px;text-align:center}
+.paywall .star{font-size:30px;color:var(--gold);line-height:1}
+.paywall b{font-size:14px;display:block;margin:8px 0 4px}
+.paywall p{font-size:12px;color:#8A6D1F;line-height:1.5}
+.ai-field{display:inline-flex;align-items:center;gap:5px;background:#F0EAFF;color:var(--purple);font-size:11px;padding:5px 10px;border-radius:8px;margin:3px 4px 3px 0}
+.shop-item{display:flex;gap:12px;align-items:center;background:var(--surface);border:1px solid var(--line);border-radius:var(--radius-s);padding:13px;margin-bottom:9px}
+.shop-item .nfc-pic{width:56px;height:56px;border-radius:12px;background:linear-gradient(135deg,#E8F1FF,#D6E6FF);display:flex;align-items:center;justify-content:center;color:var(--blue);flex:0 0 auto}
+.shop-item .si{flex:1}
+.shop-item .si b{font-size:14px;display:block}
+.shop-item .si span{font-size:11px;color:var(--muted)}
+.shop-item .si .price{color:var(--accent);font-weight:600;font-size:14px;margin-top:3px;display:block}
+.shop-item .buy{background:var(--accent);color:#fff;font-size:12px;font-weight:600;padding:8px 14px;border-radius:18px;cursor:pointer;border:none;white-space:nowrap}
+.color-grid{display:flex;flex-wrap:wrap;gap:8px;margin-top:8px}
+.color-opt{width:26px;height:26px;border-radius:50%;cursor:pointer;border:2px solid transparent;box-shadow:0 0 0 1px var(--line)}
+.color-opt.on{border-color:var(--ink);box-shadow:0 0 0 2px #fff,0 0 0 3px var(--ink)}
+.nfc-write-box{background:#E8F1FF;border-radius:12px;padding:14px;margin-top:14px;font-size:12px;color:#0A5BAE;line-height:1.6}
+</style>
+</head>
+<body>
+<div class="phone">
+  <div class="statusbar">
+    <span>9:41</span>
+    <div style="display:flex;gap:6px;align-items:center">
+      <svg width="16" height="12" viewBox="0 0 16 12"><path d="M1 9h2v3H1zM5 6h2v6H5zM9 3h2v9H9zM13 0h2v12h-2z" fill="currentColor"/></svg>
+      <svg width="15" height="12" viewBox="0 0 15 12"><path d="M7.5 11.5l-6-6C.9 4.9.9 3.1 1.5 2.5s1.6-.6 2.2 0l3.8 3.8 3.8-3.8c.6-.6 1.6-.6 2.2 0s.6 1.6 0 2.2l-6 6z" fill="currentColor"/></svg>
+      <div class="bat"><b></b></div>
+    </div>
+  </div>
+
+  <div class="screen" id="screen">
+
+    <!-- 首页 -->
+    <div class="page active" id="p-home">
+      <div style="display:flex;justify-content:space-between;align-items:flex-end;padding-top:8px">
+        <div><h1>家物志</h1><div class="sub">东西放哪，一搜就知道</div></div>
+        <div style="width:38px;height:38px;border-radius:50%;background:var(--accent-soft);color:var(--accent);display:flex;align-items:center;justify-content:center;font-weight:600">T</div>
+      </div>
+
+      <div class="member-bar" id="memberBar" onclick="go('me')">
+        <div class="ml"><div class="t" id="memberTitle"></div><div class="d" id="memberDesc"></div></div>
+        <button class="btn-mini" id="memberBtn"></button>
+      </div>
+
+      <div class="stats">
+        <div class="stat a"><div class="n" id="st-items">0</div><div class="l">件物品</div></div>
+        <div class="stat b"><div class="n" id="st-locs">0</div><div class="l">个位置</div></div>
+        <div class="stat g"><div class="n" id="st-week">0</div><div class="l">本周新增</div></div>
+      </div>
+
+      <div class="search" onclick="go('find')">
+        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="7"/><path d="M21 21l-4-4"/></svg>
+        <input id="homeSearch" placeholder="搜物品、找位置…" readonly style="cursor:pointer">
+      </div>
+
+      <div class="quick">
+        <div class="qbtn" onclick="openCapture('cam')">
+          <div class="ic cam"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M23 19a2 2 0 0 1-2 2H3a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h4l2-3h6l2 3h4a2 2 0 0 1 2 2z"/><circle cx="12" cy="13" r="4"/></svg></div>
+          <b>拍照识别 <span class="token-pill">✦ 会员</span></b><span>AI 认物品·记颜色用途</span>
+        </div>
+        <div class="qbtn" onclick="openCapture('nfc')">
+          <div class="ic nfc"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M6 8a8 8 0 0 1 0 8M10 5a12 12 0 0 1 0 14M14 2a16 16 0 0 1 0 20"/><circle cx="3" cy="12" r="1" fill="currentColor"/></svg></div>
+          <b>NFC 感应</b><span>贴一下定位·可写入贴纸</span>
+        </div>
+      </div>
+
+      <div class="sec-title"><span>最近记录</span><span onclick="go('find')" style="color:var(--accent);cursor:pointer">查看全部 ›</span></div>
+      <div id="recentList"></div>
+    </div>
+
+    <!-- 查找 -->
+    <div class="page" id="p-find">
+      <h1 style="padding-top:8px">找东西</h1>
+      <div class="sub">输入名字，告诉你它在哪</div>
+      <div class="search">
+        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="7"/><path d="M21 21l-4-4"/></svg>
+        <input id="findInput" placeholder="例如：羽绒服、螺丝刀…" oninput="renderFind()">
+      </div>
+      <div id="findResults"></div>
+    </div>
+
+    <!-- 位置 -->
+    <div class="page" id="p-loc">
+      <h1 style="padding-top:8px">收纳位置</h1>
+      <div class="sub">按房间 → 柜子 → 格子分级</div>
+      <div class="sec-title"><span>我的空间</span><span onclick="addLocation()" style="color:var(--accent);cursor:pointer">+ 新建</span></div>
+      <div id="locList"></div>
+    </div>
+
+    <!-- 我的 -->
+    <div class="page" id="p-me">
+      <h1 style="padding-top:8px">更多</h1>
+      <div class="sec-title"><span>我的会员</span></div>
+      <div class="member-bar" id="meMemberBar" onclick="showMembership()">
+        <div class="ml"><div class="t" id="meMemberTitle"></div><div class="d" id="meMemberDesc"></div></div>
+        <button class="btn-mini" id="meMemberBtn"></button>
+      </div>
+      <div class="sec-title"><span>NFC 贴商城 · 复购粘性</span></div>
+      <div class="shop-item">
+        <div class="nfc-pic"><svg width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M6 8a8 8 0 0 1 0 8M10 5a12 12 0 0 1 0 14M14 2a16 16 0 0 1 0 20"/><circle cx="3" cy="12" r="1" fill="currentColor"/></svg></div>
+        <div class="si"><b>体验装 · 10 枚</b><span>NTAG213 纯白 · 首次试用</span><span class="price">¥19.9</span></div>
+        <button class="buy" onclick="buyTags(10,'体验装')">购买</button>
+      </div>
+      <div class="shop-item" style="border-color:var(--accent)">
+        <div class="nfc-pic"><svg width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M6 8a8 8 0 0 1 0 8M10 5a12 12 0 0 1 0 14M14 2a16 16 0 0 1 0 20"/><circle cx="3" cy="12" r="1" fill="currentColor"/></svg></div>
+        <div class="si"><b>家庭装 · 30 枚 <span class="token-pill" style="margin-left:4px">主推</span></b><span>3 色分类 · 满 ¥39 包邮</span><span class="price">¥49</span></div>
+        <button class="buy" onclick="buyTags(30,'家庭装')">购买</button>
+      </div>
+      <div class="shop-item">
+        <div class="nfc-pic"><svg width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M6 8a8 8 0 0 1 0 8M10 5a12 12 0 0 1 0 14M14 2a16 16 0 0 1 0 20"/><circle cx="3" cy="12" r="1" fill="currentColor"/></svg></div>
+        <div class="si"><b>大包装 · 100 枚</b><span>混色 · 全屋收纳复购囤货</span><span class="price">¥129</span></div>
+        <button class="buy" onclick="buyTags(100,'大包装')">购买</button>
+      </div>
+      <div class="sec-title"><span>智能整理 <span class="token-pill" style="margin-left:6px">✦ 会员</span></span></div>
+      <div class="banner" onclick="showAdvice()">
+        <h2>AI 帮我理一理</h2>
+        <p>找出重复、闲置和收纳优化建议</p>
+        <div class="big">✦</div>
+      </div>
+      <div class="sec-title"><span>数据管理</span></div>
+      <div class="card" onclick="exportData()"><div class="thumb" style="color:var(--blue)"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4M7 10l5 5 5-5M12 15V3"/></svg></div><div class="info"><b>导出数据</b><div class="meta">备份为 JSON 文件</div></div></div>
+      <div class="card" onclick="resetDemo()"><div class="thumb" style="color:var(--accent)"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 12a9 9 0 1 0 3-6.7L3 8M3 3v5h5"/></svg></div><div class="info"><b>重置演示数据</b><div class="meta">恢复初始示例物品</div></div></div>
+      <div class="tip" style="margin-top:20px"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="flex:0 0 auto"><circle cx="12" cy="12" r="10"/><path d="M12 16v-4M12 8h.01"/></svg><span>这是可交互 Demo：数据保存在本机浏览器，刷新不丢失。拍照识别为演示模拟，正式版接视觉大模型。</span></div>
+      <div style="text-align:center;color:var(--muted);font-size:11px;margin-top:24px">家物志 Demo v0.1 · 全栈智造专家团</div>
+    </div>
+
+  </div>
+
+  <!-- 底部 Tab -->
+  <div class="tabbar">
+    <div class="tab active" data-tab="home" onclick="go('home')">
+      <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/><path d="M9 22V12h6v10"/></svg><span>首页</span>
+    </div>
+    <div class="tab" data-tab="find" onclick="go('find')">
+      <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="7"/><path d="M21 21l-4-4"/></svg><span>找东西</span>
+    </div>
+    <div class="tab add" onclick="openCapture('cam')"><div class="plus"><svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M12 5v14M5 12h14"/></svg></div><span>记录</span></div>
+    <div class="tab" data-tab="loc" onclick="go('loc')">
+      <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M22 19a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h5l2 3h9a2 2 0 0 1 2 2z"/></svg><span>位置</span>
+    </div>
+    <div class="tab" data-tab="me" onclick="go('me')">
+      <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="8" r="4"/><path d="M4 21a8 8 0 0 1 16 0"/></svg><span>更多</span>
+    </div>
+  </div>
+
+  <!-- 录入底部弹层 -->
+  <div class="sheet-mask" id="captureSheet">
+    <div class="sheet">
+      <div class="grab"></div>
+      <span class="close" onclick="closeCapture()">×</span>
+      <div id="captureContent"></div>
+    </div>
+  </div>
+
+  <!-- 详情/建议弹层 -->
+  <div class="sheet-mask" id="infoSheet">
+    <div class="sheet">
+      <div class="grab"></div>
+      <span class="close" onclick="hide('infoSheet')">×</span>
+      <div id="infoContent"></div>
+    </div>
+  </div>
+
+  <div class="toast" id="toast"></div>
+</div>
+
+<script>
+/* ================= 数据层 ================= */
+const KEY='jiawuzhi_demo_v2';
+const COLORS=[{n:'黑',c:'#1D1D1F'},{n:'白',c:'#FFFFFF'},{n:'灰',c:'#8E8E93'},{n:'红',c:'#E24B4A'},{n:'蓝',c:'#378ADD'},{n:'绿',c:'#639922'},{n:'黄',c:'#EF9F27'},{n:'米',c:'#E8DCC8'},{n:'粉',c:'#ED93B1'},{n:'棕',c:'#8B5E3C'}];
+const CATS=['衣物','工具','食品','日用','数码','书籍','其他'];
+const CAT_ICON={'衣物':'👕','工具':'🔧','食品':'🍫','日用':'🧴','数码':'🔌','书籍':'📚','其他':'📦'};
+const USES=['日常穿着','换季收纳','居家备用','维修工具','充电数码','纪念收藏','清洁日用','其他'];
+const AI_GUESSES=[
+  {name:'无线蓝牙耳机',cat:'数码',color:'黑',use:'充电数码'},
+  {name:'折叠雨伞',cat:'日用',color:'蓝',use:'居家备用'},
+  {name:'纯棉长袖T恤',cat:'衣物',color:'白',use:'日常穿着'},
+  {name:'巧克力礼盒',cat:'食品',color:'棕',use:'其他'}
+];
+
+let DB={items:[],locations:[],member:{level:'free',tokens:10,total:10,tags:0}};
+
+function seed(){
+  const L=[
+    {id:'r1',name:'主卧',parent:null},
+    {id:'r1a',name:'衣柜·上层',parent:'r1'},
+    {id:'r1b',name:'床头柜抽屉',parent:'r1'},
+    {id:'r2',name:'客厅',parent:null},
+    {id:'r2a',name:'电视柜',parent:'r2'},
+    {id:'r2b',name:'储物箱',parent:'r2'},
+    {id:'r3',name:'书房',parent:null},
+    {id:'r3a',name:'书柜第二层',parent:'r3'}
+  ];
+  const now=Date.now();
+  const I=[
+    {id:'i1',name:'冬季羽绒服',cat:'衣物',loc:'r1a',img:null,color:'黑',use:'换季收纳',t:now-1000*60*60*20,tags:['换季']},
+    {id:'i2',name:'螺丝刀套装',cat:'工具',loc:'r2b',img:null,color:'红',use:'维修工具',t:now-1000*60*60*40,tags:['维修']},
+    {id:'i3',name:'备用毛巾',cat:'日用',loc:'r1a',img:null,color:'米',use:'居家备用',t:now-1000*60*60*60,tags:[]},
+    {id:'i4',name:'数据线收纳盒',cat:'数码',loc:'r3a',img:null,color:'黑',use:'充电数码',t:now-1000*60*60*80,tags:['充电']},
+    {id:'i5',name:'儿童相册',cat:'书籍',loc:'r3a',img:null,color:'粉',use:'纪念收藏',t:now-1000*60*60*100,tags:['纪念']},
+    {id:'i6',name:'生日蜡烛',cat:'日用',loc:'r2a',img:null,color:'黄',use:'其他',t:now-1000*60*60*120,tags:['聚会']}
+  ];
+  return {items:I,locations:L,member:{level:'free',tokens:10,total:10,tags:0}};
+}
+function load(){
+  try{const s=localStorage.getItem(KEY);DB=s?JSON.parse(s):seed()}catch(e){DB=seed()}
+  if(!DB.locations||!DB.items)DB=seed();
+  if(!DB.member)DB.member={level:'free',tokens:10,total:10,tags:0};
+}
+function save(){localStorage.setItem(KEY,JSON.stringify(DB))}
+function uid(p){return p+Date.now().toString(36)+Math.floor(Math.random()*999).toString(36)}
+function locName(id){const l=DB.locations.find(x=>x.id===id);return l?l.name:'未分类'}
+function fullLoc(id){const l=DB.locations.find(x=>x.id===id);if(!l)return'未分类';return l.parent?locName(l.parent)+' · '+l.name:l.name}
+function fmt(t){const d=Date.now()-t;const h=Math.floor(d/3600000);if(h<1)return'刚刚';if(h<24)return h+'小时前';return Math.floor(h/24)+'天前'}
+
+/* ================= 导航 ================= */
+function go(tab){
+  document.querySelectorAll('.page').forEach(p=>p.classList.remove('active'));
+  document.getElementById('p-'+tab).classList.add('active');
+  document.querySelectorAll('.tab').forEach(t=>t.classList.toggle('active',t.dataset.tab===tab));
+  document.getElementById('screen').scrollTop=0;
+  if(tab==='home')renderHome();
+  if(tab==='find')renderFind();
+  if(tab==='loc')renderLoc();
+  if(tab==='me')renderMemberBars();
+}
+
+/* ================= 首页 ================= */
+function renderHome(){
+  document.getElementById('st-items').textContent=DB.items.length;
+  document.getElementById('st-locs').textContent=DB.locations.length;
+  document.getElementById('st-week').textContent=DB.items.filter(i=>Date.now()-i.t<7*86400000).length;
+  const recent=[...DB.items].sort((a,b)=>b.t-a.t).slice(0,4);
+  document.getElementById('recentList').innerHTML=recent.length?recent.map(itemCard).join(''):emptyHTML('还没有物品，点下面「记录」添加');
+  renderMemberBars();
+}
+function renderMemberBars(){
+  const m=DB.member,isVip=m.level==='vip';
+  const title=isVip?'✦ 家物志会员':'免费版';
+  const desc=isVip?`视觉 Token ${m.tokens} 次 · 已绑 ${m.tags} 张 NFC 贴`:`剩余 ${m.tokens} 次 AI 识别 · 升级解锁无限`;
+  const btn=isVip?'管理':'升级会员';
+  [['memberTitle','memberDesc','memberBtn'],['meMemberTitle','meMemberDesc','meMemberBtn']].forEach(ids=>{
+    document.getElementById(ids[0]).innerHTML=`<span class="vip-badge ${isVip?'':'free'}">${title}</span>`;
+    document.getElementById(ids[1]).textContent=desc;
+    document.getElementById(ids[2]).textContent=btn;
+  });
+}
+function colorHex(n){const c=COLORS.find(x=>x.n===n);return c?c.c:'#E8E8ED'}
+function itemCard(i){
+  const img=i.img?`<img src="${i.img}">`:(CAT_ICON[i.cat]||'📦');
+  const dot=i.color?`<span style="display:inline-block;width:8px;height:8px;border-radius:50%;background:${colorHex(i.color)};border:1px solid var(--line);vertical-align:middle;margin-right:4px"></span>`:'';
+  return `<div class="card" onclick="showItem('${i.id}')">
+    <div class="thumb">${img}</div>
+    <div class="info"><b>${dot}${esc(i.name)}</b><div class="meta">📍 ${fullLoc(i.loc)}${i.use?' · '+esc(i.use):''}</div></div>
+    <span class="pill">${i.cat}</span>
+  </div>`;
+}
+function emptyHTML(t){return `<div class="empty"><svg width="46" height="46" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/></svg><p>${t}</p></div>`}
+function esc(s){return String(s).replace(/[<>]/g,'')}
+
+/* ================= 查找 ================= */
+function renderFind(){
+  const q=(document.getElementById('findInput').value||'').trim().toLowerCase();
+  const box=document.getElementById('findResults');
+  if(!q){box.innerHTML=`<div class="tip"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><path d="M12 16v-4M12 8h.01"/></svg><span>试着搜「羽绒服」「工具」「主卧」——支持物品名、类别、位置搜索。</span></div>`;return}
+  const r=DB.items.filter(i=>(i.name+i.cat+fullLoc(i.loc)+(i.color||'')+(i.use||'')+i.tags.join('')).toLowerCase().includes(q));
+  box.innerHTML=r.length?`<div class="sec-title"><span>找到 ${r.length} 件</span></div>`+r.map(itemCard).join(''):emptyHTML('没找到「'+esc(q)+'」，换个词试试');
+}
+
+/* ================= 位置 ================= */
+function renderLoc(){
+  const roots=DB.locations.filter(l=>!l.parent);
+  document.getElementById('locList').innerHTML=roots.map(l=>{
+    const kids=DB.locations.filter(x=>x.parent===l.id);
+    const cnt=DB.items.filter(i=>i.loc===l.id||kids.some(k=>k.id===i.loc)).length;
+    return `<div class="loc" id="loc-${l.id}">
+      <div class="loc-head" onclick="toggleLoc('${l.id}')">
+        <div class="ic room"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/></svg></div>
+        <div class="txt"><b>${esc(l.name)}</b><span>${cnt} 件物品 · ${kids.length} 个子位置</span></div>
+        <svg class="arrow" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M9 18l6-6-6-6"/></svg>
+      </div>
+      <div class="loc-body">
+        ${kids.map(k=>`<div class="subloc" onclick="showLocItems('${k.id}')"><span class="dot"></span>${esc(k.name)}<span class="cnt">${DB.items.filter(i=>i.loc===k.id).length} 件 ›</span></div>`).join('')||'<div class="subloc" style="color:var(--muted)">暂无子位置</div>'}
+        <div class="subloc" onclick="showLocItems('${l.id}')" style="color:var(--accent)"><span class="dot" style="background:var(--accent)"></span>查看此位置全部物品<span class="cnt">›</span></div>
+      </div>
+    </div>`;
+  }).join('');
+}
+function toggleLoc(id){document.getElementById('loc-'+id).classList.toggle('open')}
+function showLocItems(id){
+  const r=DB.items.filter(i=>i.loc===id);
+  document.getElementById('infoContent').innerHTML=`<h2>${esc(fullLoc(id))}</h2><p class="sub" style="margin-bottom:14px">共 ${r.length} 件物品</p>`+(r.length?r.map(itemCard).join(''):emptyHTML('这个位置还是空的'));
+  show('infoSheet');
+}
+function addLocation(){
+  const name=prompt('新位置名称（如：阳台储物柜）');
+  if(!name)return;
+  const parent=prompt('父级位置名称（留空则为房间，如：客厅）')||null;
+  let pid=null;
+  if(parent){let p=DB.locations.find(l=>l.name===parent);if(!p){p={id:uid('r'),name:parent,parent:null};DB.locations.push(p)}pid=p.id}
+  DB.locations.push({id:uid('r'),name:name.trim(),parent:pid});
+  save();renderLoc();toast('位置已添加');
+}
+
+/* ================= 物品详情 ================= */
+function showItem(id){
+  const i=DB.items.find(x=>x.id===id);if(!i)return;
+  document.getElementById('infoContent').innerHTML=`
+    <h2>${esc(i.name)}</h2>
+    <div style="margin:12px 0">
+      ${i.img?`<img src="${i.img}" style="width:100%;border-radius:12px;max-height:220px;object-fit:cover">`:`<div style="height:120px;border-radius:12px;background:var(--bg);display:flex;align-items:center;justify-content:center;font-size:56px">${CAT_ICON[i.cat]||'📦'}</div>`}
+    </div>
+    <div class="list-row"><span class="l">📁 类别</span><span class="r">${i.cat}</span></div>
+    ${i.color?`<div class="list-row"><span class="l">🎨 颜色</span><span class="r"><span style="display:inline-block;width:11px;height:11px;border-radius:50%;background:${colorHex(i.color)};border:1px solid var(--line);vertical-align:middle;margin-right:5px"></span>${i.color}</span></div>`:''}
+    ${i.use?`<div class="list-row"><span class="l">🎯 用途</span><span class="r">${esc(i.use)}</span></div>`:''}
+    <div class="list-row"><span class="l">📍 位置</span><span class="r">${fullLoc(i.loc)}</span></div>
+    <div class="list-row"><span class="l">🕐 记录于</span><span class="r">${fmt(i.t)}</span></div>
+    ${i.tags.length?`<div class="list-row"><span class="l">🏷 标签</span><span class="r">${i.tags.map(t=>'#'+esc(t)).join(' ')}</span></div>`:''}
+    <div class="nfc-write-box" style="margin-bottom:14px"><b>📶 NFC 贴绑定</b><br>把预编码 NFC 贴贴到收纳处，碰一下即定位这件物品所在位置。${i.nfcUid?`<br><span style="color:var(--green)">✓ 已绑定：${esc(i.nfcUid)}</span>`:''}</div>
+    <button class="btn blue" style="margin-bottom:10px" onclick="bindNFC('${i.id}')">写入 / 绑定 NFC 贴</button>
+    <div class="btn-row"><button class="btn ghost" onclick="deleteItem('${i.id}')">删除</button><button class="btn primary" onclick="hide('infoSheet')">完成</button></div>`;
+  show('infoSheet');
+}
+function deleteItem(id){
+  if(!confirm('确定删除这件物品？'))return;
+  DB.items=DB.items.filter(x=>x.id!==id);save();hide('infoSheet');renderHome();renderFind();toast('已删除');
+}
+
+/* ================= 录入：拍照 / NFC ================= */
+let captureMode='cam', pickedImg=null, pickedCat='其他', pickedLoc=null, aiGuess=null, pickedColor='黑', pickedUse='其他';
+
+function openCapture(mode){
+  captureMode=mode;pickedImg=null;pickedCat='其他';pickedLoc=null;aiGuess=null;pickedColor='黑';pickedUse='其他';
+  document.getElementById('captureContent').innerHTML = mode==='cam'?camHTML():nfcHTML();
+  show('captureSheet');
+}
+function camHTML(){
+  const m=DB.member,canAI=m.level==='vip'||m.tokens>0;
+  const paywall=canAI?'':`<div class="paywall">
+    <div class="star">✦</div><b>AI 识别是会员功能</b>
+    <p>每次识别消耗 1 个视觉 Token 用于初步整理<br>你的免费额度已用完，升级会员解锁无限识别</p>
+    <button class="btn primary" style="margin-top:12px" onclick="showMembership()">查看会员方案</button>
+  </div>`;
+  return `<h2>拍照识别 <span class="token-pill">✦ 会员</span></h2><p class="sub">拍一下，AI 认出物品并记录颜色、用途</p>
+  ${canAI?`<div class="tip"><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><path d="M12 16v-4M12 8h.01"/></svg><span>本次识别将消耗 1 个视觉 Token（剩余 ${m.level==='vip'?'∞':m.tokens}）</span></div>`:''}
+  ${paywall}
+  <div class="scanbox ${canAI?'':'lock'}" style="border:none;padding:0;margin-top:16px">
+    <div class="camera-frame" id="camFrame">
+      <div class="ph" id="camPh"><svg width="42" height="42" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M23 19a2 2 0 0 1-2 2H3a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h4l2-3h6l2 3h4a2 2 0 0 1 2 2z"/><circle cx="12" cy="13" r="4"/></svg><p>选择一张物品照片</p></div>
+      <div class="scanline"></div>
+    </div>
+    <input type="file" id="fileInput" accept="image/*" style="display:none" onchange="onPick(event)">
+    <button class="btn ghost" onclick="document.getElementById('fileInput').click()">选择照片</button>
+    <div id="aiResult"></div>
+  </div>
+  <div id="saveForm"></div>`;
+}
+function onPick(e){
+  const m=DB.member;
+  if(m.level!=='vip'&&m.tokens<=0){toast('免费额度已用完，请升级会员');return}
+  const f=e.target.files[0];if(!f)return;
+  // 手机拍照原图压缩到 1024px，避免局域网传输过慢
+  compressImage(f,1024,function(dataUrl){
+    pickedImg=dataUrl;
+    const fr=document.getElementById('camFrame');
+    fr.innerHTML=`<img src="${pickedImg}"><div class="scanline"></div>`;
+    fr.classList.add('scanning');
+    document.getElementById('aiResult').innerHTML=`<div style="margin-top:14px;color:var(--accent);font-size:13px">AI 正在识别物品…（首次约 3-8 秒）</div>`;
+    // 真实调用本地服务器的 AI 代理
+    fetch('/api/vision',{
+      method:'POST',headers:{'Content-Type':'application/json'},
+      body:JSON.stringify({image_url:dataUrl})
+    }).then(r=>r.json()).then(res=>{
+      if(res.ok&&res.result){
+        finishAI(res.result,res.model);
+      }else{
+        // AI 失败降级为模拟，保证 Demo 可用
+        document.getElementById('camFrame').classList.remove('scanning');
+        toast('AI 连接失败，已用演示识别');
+        finishAI(null,null);
+      }
+    }).catch(err=>{
+      document.getElementById('camFrame').classList.remove('scanning');
+      toast('网络异常，已用演示识别');
+      finishAI(null,null);
+    });
+  });
+}
+function compressImage(file,maxSide,cb){
+  const r=new FileReader();
+  r.onload=ev=>{
+    const img=new Image();
+    img.onload=()=>{
+      let w=img.width,h=img.height;
+      if(w>maxSide||h>maxSide){const s=maxSide/Math.max(w,h);w=Math.round(w*s);h=Math.round(h*s)}
+      const c=document.createElement('canvas');c.width=w;c.height=h;
+      c.getContext('2d').drawImage(img,0,0,w,h);
+      cb(c.toDataURL('image/jpeg',0.75));
+    };
+    img.src=ev.target.result;
+  };
+  r.readAsDataURL(file);
+}
+function finishAI(result,modelName){
+  document.getElementById('camFrame').classList.remove('scanning');
+  if(result&&result.name){
+    aiGuess={name:result.name,cat:CATS.includes(result.cat)?result.cat:'其他',
+      color:COLORS.some(c=>c.n===result.color)?result.color:'米',
+      use:USES.includes(result.use)?result.use:'其他',
+      confidence:result.confidence||0.9};
+  }else{
+    aiGuess=AI_GUESSES[Math.floor(Math.random()*AI_GUESSES.length)];aiGuess.confidence=0.9;modelName=null;
+  }
+  pickedCat=aiGuess.cat;pickedColor=aiGuess.color;pickedUse=aiGuess.use;
+  if(DB.member.level!=='vip')DB.member.tokens=Math.max(0,DB.member.tokens-1);
+  save();
+  const conf=Math.round((aiGuess.confidence||0.9)*100);
+  const modelTag=modelName?`<span class="result-tag" style="background:#E8F1FF;color:var(--blue)">模型 ${esc(String(modelName).split('/').pop())}</span>`:'<span class="result-tag" style="background:var(--bg);color:var(--muted)">演示识别</span>';
+  document.getElementById('aiResult').innerHTML=`
+    <div style="margin-top:14px;text-align:left">
+      <span class="result-tag"><svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 2l2 7 7 2-7 2-2 7-2-7-7-2 7-2z"/></svg>AI 识别完成 · 消耗 1 Token</span> ${modelTag}
+      <div style="font-size:12px;color:var(--muted);margin-top:4px">识别为：<b style="color:var(--ink);font-size:14px">${esc(aiGuess.name)}</b> · 置信度 ${conf}%</div>
+      <div style="margin-top:8px">
+        <span class="ai-field">🎨 颜色：${aiGuess.color}</span>
+        <span class="ai-field">🎯 用途：${aiGuess.use}</span>
+        <span class="ai-field">📦 类别：${aiGuess.cat}</span>
+      </div>
+    </div>`;
+  renderSaveForm(aiGuess.name);
+}
+function nfcHTML(){
+  const supported='NDEFReader' in window;
+  return `<h2>NFC 感应</h2><p class="sub">贴一下标签，直接定位收纳处</p>
+  <div class="nfc-wave" id="nfcWave">
+    <div class="ring"></div><div class="ring"></div><div class="ring"></div>
+    <div class="core"><svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M6 8a8 8 0 0 1 0 8M10 5a12 12 0 0 1 0 14M14 2a16 16 0 0 1 0 20"/><circle cx="3" cy="12" r="1" fill="currentColor"/></svg></div>
+  </div>
+  <div id="nfcStatus" style="font-size:13px;color:var(--muted)">${supported?'设备支持 NFC，点击下方开始感应':'当前环境不支持 Web NFC，用「模拟感应」演示'}</div>
+  <div class="btn-row">
+    ${supported?'<button class="btn blue" onclick="startNFC()">开始感应</button>':''}
+    <button class="btn ${supported?'ghost':'blue'}" onclick="simulateNFC()">模拟感应标签</button>
+  </div>
+  <div class="tip warn"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="flex:0 0 auto"><path d="M12 9v4M12 17h.01M10.3 3.9L1.8 18a2 2 0 0 0 1.7 3h17a2 2 0 0 0 1.7-3L13.7 3.9a2 2 0 0 0-3.4 0z"/></svg><span>iPhone 小程序无法写 NFC，正式版用「预编码 UID 贴 + 二维码兜底」，安卓走原生 NDEF。此处为流程演示。</span></div>
+  <div id="nfcResult"></div>
+  <div id="saveForm"></div>`;
+}
+function startNFC(){
+  if(!('NDEFReader' in window)){toast('当前环境不支持 Web NFC');return}
+  const reader=new NDEFReader();
+  reader.scan().then(()=>{
+    document.getElementById('nfcWave').classList.add('active');
+    toast('感应中，请贴近标签…');
+    reader.onreading=()=>handleNFCTag('NDEF 标签 '+Math.floor(Math.random()*9000+1000));
+  }).catch(()=>toast('NFC 权限被拒绝'));
+}
+function simulateNFC(){
+  document.getElementById('nfcWave').classList.add('active');
+  document.getElementById('nfcStatus').textContent='感应中…';
+  setTimeout(()=>handleNFCTag('TAG-'+Math.floor(Math.random()*9000+1000)),1300);
+}
+function handleNFCTag(tag){
+  document.getElementById('nfcWave').classList.remove('active');
+  const locs=DB.locations;
+  const guessLoc=locs[Math.floor(Math.random()*locs.length)];
+  pickedLoc=guessLoc.id;
+  document.getElementById('nfcStatus').textContent='读到标签 '+tag;
+  document.getElementById('nfcResult').innerHTML=`<div class="result-tag" style="background:#E8F1FF;color:var(--blue)">已绑定到位置：${esc(fullLoc(pickedLoc))}</div><div style="font-size:12px;color:var(--muted);margin-bottom:6px">记录一件物品到这个位置：</div>`;
+  renderSaveForm('',true);
+}
+function renderSaveForm(defName,isNFC){
+  const locOpts=DB.locations.map(l=>`<option value="${l.id}" ${l.id===pickedLoc?'selected':''}>${esc(fullLoc(l.id))}</option>`).join('');
+  const catChips=CATS.map(c=>`<span class="chip ${c===pickedCat?'on':''}" onclick="pickCat('${c}',this)">${CAT_ICON[c]} ${c}</span>`).join('');
+  const colorGrid=COLORS.map(o=>`<span class="color-opt ${o.n===pickedColor?'on':''}" style="background:${o.c}" title="${o.n}" onclick="pickColor('${o.n}',this)"></span>`).join('');
+  const useOpts=USES.map(u=>`<option value="${u}" ${u===pickedUse?'selected':''}>${u}</option>`).join('');
+  document.getElementById('saveForm').innerHTML=`
+    <div class="field"><label>物品名称</label><input id="fName" placeholder="例如：备用充电宝" value="${esc(defName)}"></div>
+    <div class="field"><label>类别</label><div class="chips" id="catChips">${catChips}</div></div>
+    <div class="field"><label>颜色${aiGuess?'（AI 已识别，可改）':''}</label><div class="color-grid" id="colorGrid">${colorGrid}</div></div>
+    <div class="field"><label>用途${aiGuess?'（AI 已识别，可改）':''}</label><select id="fUse">${useOpts}</select></div>
+    <div class="field"><label>放在哪里</label><select id="fLoc">${locOpts}</select></div>
+    <div class="nfc-write-box"><b>📶 想贴 NFC 标签？</b><br>保存后可在物品详情里「写入/绑定 NFC 贴」，贴到收纳箱上，下次碰一下就找到。</div>
+    <div class="btn-row"><button class="btn primary" onclick="saveItem()">保存入库</button></div>`;
+}
+function pickCat(c,el){
+  pickedCat=c;
+  document.querySelectorAll('#catChips .chip').forEach(x=>x.classList.remove('on'));
+  el.classList.add('on');
+}
+function pickColor(c,el){
+  pickedColor=c;
+  document.querySelectorAll('#colorGrid .color-opt').forEach(x=>x.classList.remove('on'));
+  el.classList.add('on');
+}
+function saveItem(){
+  const name=(document.getElementById('fName').value||'').trim();
+  if(!name){toast('请填物品名称');return}
+  const loc=document.getElementById('fLoc').value;
+  const use=document.getElementById('fUse')?document.getElementById('fUse').value:pickedUse;
+  DB.items.unshift({id:uid('i'),name,cat:pickedCat,loc,img:pickedImg,color:pickedColor,use,t:Date.now(),tags:aiGuess?['AI识别']:['NFC']});
+  save();closeCapture();go('home');toast('已入库 · '+fullLoc(loc));
+}
+
+/* ================= AI 整理建议 ================= */
+function showAdvice(){
+  const counts={};DB.items.forEach(i=>counts[i.cat]=(counts[i.cat]||0)+1);
+  const topCat=Object.entries(counts).sort((a,b)=>b[1]-a[1])[0];
+  const emptyLocs=DB.locations.filter(l=>!DB.items.some(i=>i.loc===l.id));
+  const dupes=Object.values(DB.items.reduce((a,i)=>{(a[i.name]=(a[i.name]||0)+1);return a},{})).filter(n=>n>1).length;
+  document.getElementById('infoContent').innerHTML=`
+    <h2>AI 整理建议</h2><p class="sub" style="margin-bottom:16px">基于你家 ${DB.items.length} 件物品的分析</p>
+    <div class="advice"><div class="ic r"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 2l2 7 7 2-7 2-2 7-2-7-7-2 7-2z"/></svg></div><div><b>分类盘点</b><p>「${topCat?topCat[0]:'暂无'}」类最多（${topCat?topCat[1]:0} 件），建议给这类物品单独规划一个收纳区。</p></div></div>
+    <div class="advice"><div class="ic y"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 6h18M3 12h18M3 18h18"/></svg></div><div><b>空间利用</b><p>${emptyLocs.length} 个位置还是空的，可以把高频物品集中到顺手的位置，减少翻找。</p></div></div>
+    <div class="advice"><div class="ic g"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M20 6L9 17l-5-5"/></svg></div><div><b>重复检查</b><p>${dupes?`发现 ${dupes} 组同名物品，入库时 AI 会提醒你，避免重复购买。`:'暂未发现重复物品，继续保持！'}</p></div></div>
+    <div class="tip"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><path d="M12 16v-4M12 8h.01"/></svg><span>正式版接入大模型后，会结合物品照片、购买时间和你常说的「找不到XX」做更精准的收纳建议。</span></div>`;
+  show('infoSheet');
+}
+
+/* ================= 工具 ================= */
+function show(id){document.getElementById(id).classList.add('show')}
+function hide(id){document.getElementById(id).classList.remove('show')}
+function closeCapture(){hide('captureSheet')}
+function toast(t){const el=document.getElementById('toast');el.textContent=t;el.classList.add('show');clearTimeout(el._t);el._t=setTimeout(()=>el.classList.remove('show'),2000)}
+function exportData(){
+  const blob=new Blob([JSON.stringify(DB,null,2)],{type:'application/json'});
+  const a=document.createElement('a');a.href=URL.createObjectURL(blob);a.download='家物志数据.json';a.click();
+  toast('已导出');
+}
+function resetDemo(){if(confirm('恢复初始演示数据？当前记录将清空。')){DB=seed();save();renderHome();renderLoc();toast('已重置')}}
+
+/* ================= 会员 / Token ================= */
+function showMembership(){
+  const m=DB.member;
+  document.getElementById('infoContent').innerHTML=`
+    <h2>会员方案</h2><p class="sub" style="margin-bottom:16px">AI 识别消耗视觉 Token，会员解锁无限提效</p>
+    <div class="advice"><div class="ic r"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 2l2 7 7 2-7 2-2 7-2-7-7-2 7-2z"/></svg></div><div><b>免费版</b><p>每月 10 次 AI 拍照识别 · 手动录入无限 · NFC 感应全功能 · 当前剩余 ${m.level==='vip'?'∞':m.tokens} 次</p></div></div>
+    <div class="advice" style="border:1px solid var(--gold)"><div class="ic y" style="background:var(--gold-soft);color:var(--gold)"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 2l2 7 7 2-7 2-2 7-2-7-7-2 7-2z"/></svg></div><div><b>✦ AI 会员 · ¥12/月（年付 ¥98）</b><p>无限 AI 识别（自动记颜色/用途/类别） · AI 智能整理建议 · 家庭成员共享 · 个人年付 ¥98≈¥8.2/月 · 家庭版 ¥198/年</p></div></div>
+    <div class="tip"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><path d="M12 16v-4M12 8h.01"/></svg><span>成本透明：AI 识别单次仅约 ¥0.0014（GPT-5.6 Luna，100 件约 ¥0.14）。Token 是计量单位不是定价依据——付费买的是「AI 帮你省打字、找得到」的提效。</span></div>
+    <div class="btn-row"><button class="btn primary" onclick="upgradeVip()">${m.level==='vip'?'已是会员':'升级会员'}</button>${m.level==='vip'?'<button class="btn ghost" onclick="downgradeVip()">切回免费</button>':''}</div>`;
+  show('infoSheet');
+}
+function upgradeVip(){DB.member.level='vip';save();hide('infoSheet');renderHome();toast('已升级会员 · 无限 AI 识别')}
+function downgradeVip(){DB.member.level='free';DB.member.tokens=5;save();hide('infoSheet');renderHome();toast('已切回免费版')}
+function buyTags(count,sku){
+  if(confirm(`购买 NFC 贴 ${sku} ${count} 枚？\n（演示：确认后模拟下单并到账）`)){
+    DB.member.tags=(DB.member.tags||0)+count;save();renderHome();toast(`下单成功 · ${count} 枚 NFC 贴已到账`);renderMemberBars();
+  }
+}
+function bindNFC(itemId){
+  const i=DB.items.find(x=>x.id===itemId);if(!i)return;
+  const uid='04'+Math.random().toString(16).slice(2,10).toUpperCase();
+  i.nfcUid=uid;DB.member.tags=Math.max(0,(DB.member.tags||1)-1);save();
+  hide('infoSheet');toast('NFC 贴已绑定到「'+i.name+'」');
+  setTimeout(()=>showItem(itemId),300);
+}
+
+document.querySelectorAll('.sheet-mask').forEach(m=>m.addEventListener('click',e=>{if(e.target===m)m.classList.remove('show')}));
+load();renderHome();renderLoc();
+</script>
+</body>
+</html>

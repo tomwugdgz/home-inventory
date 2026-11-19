@@ -1,0 +1,17 @@
+# ===== 敏感配置（绝不上传）=====
+.env
+*.env
+!config.example.env
+
+# ===== 运行时临时文件 =====
+__pycache__/
+*.pyc
+*.log
+models.json
+t.json
+vl_*.json
+*_test.json
+
+# ===== 系统文件 =====
+.DS_Store
+Thumbs.db

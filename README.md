@@ -2,6 +2,7 @@
 
 > 交付日期：2026-11-19 · 阶段：Phase 1 + 本地可跑 Demo（已接入真实 AI）
 > 架构：**你的电脑当本地服务器，局域网手机直接访问**
+> GitHub 仓库：https://github.com/tomwugdgz/home-inventory （公开，Key 已脱敏）
 
 ---
 

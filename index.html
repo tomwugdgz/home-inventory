@@ -258,7 +258,7 @@ h2{font-size:17px;font-weight:600}
     <div class="page" id="p-loc">
       <h1 style="padding-top:8px">收纳位置</h1>
       <div class="sub">按房间 → 柜子 → 格子分级</div>
-      <div class="sec-title"><span>我的空间</span><span onclick="addLocation()" style="color:var(--accent);cursor:pointer">+ 新建</span></div>
+      <div class="sec-title"><span>我的空间（无限层级 · 可改名删除）</span><span onclick="addLocation()" style="color:var(--accent);cursor:pointer">+ 新建</span></div>
       <div id="locList"></div>
     </div>
 
@@ -292,11 +292,13 @@ h2{font-size:17px;font-weight:600}
         <p>找出重复、闲置和收纳优化建议</p>
         <div class="big">✦</div>
       </div>
+      <div class="sec-title"><span>自定义设置</span></div>
+      <div class="card" onclick="manageTaxonomy()"><div class="thumb" style="color:var(--purple)"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M20.6 13.4L12 22l-9-9V3h10l7.6 7.6a2 2 0 0 1 0 2.8z"/><circle cx="7.5" cy="7.5" r="1.3"/></svg></div><div class="info"><b>管理类别 / 用途</b><div class="meta">增删你自己的分类标签</div></div></div>
       <div class="sec-title"><span>数据管理</span></div>
       <div class="card" onclick="exportData()"><div class="thumb" style="color:var(--blue)"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4M7 10l5 5 5-5M12 15V3"/></svg></div><div class="info"><b>导出数据</b><div class="meta">备份为 JSON 文件</div></div></div>
       <div class="card" onclick="resetDemo()"><div class="thumb" style="color:var(--accent)"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 12a9 9 0 1 0 3-6.7L3 8M3 3v5h5"/></svg></div><div class="info"><b>重置演示数据</b><div class="meta">恢复初始示例物品</div></div></div>
-      <div class="tip" style="margin-top:20px"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="flex:0 0 auto"><circle cx="12" cy="12" r="10"/><path d="M12 16v-4M12 8h.01"/></svg><span>这是可交互 Demo：数据保存在本机浏览器，刷新不丢失。拍照识别为演示模拟，正式版接视觉大模型。</span></div>
-      <div style="text-align:center;color:var(--muted);font-size:11px;margin-top:24px">家物志 Demo v0.1 · 全栈智造专家团</div>
+      <div class="tip" style="margin-top:20px"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="flex:0 0 auto"><circle cx="12" cy="12" r="10"/><path d="M12 16v-4M12 8h.01"/></svg><span>可交互 Demo：数据存本机浏览器，刷新不丢。拍照识别已接入本地 AI（通过电脑服务器代理）。位置、类别、用途全部可自定义。</span></div>
+      <div style="text-align:center;color:var(--muted);font-size:11px;margin-top:24px">家物志 Demo v0.2 · 全栈智造专家团</div>
     </div>
 
   </div>
@@ -341,11 +343,12 @@ h2{font-size:17px;font-weight:600}
 
 <script>
 /* ================= 数据层 ================= */
-const KEY='jiawuzhi_demo_v2';
+const KEY='jiawuzhi_demo_v3';
 const COLORS=[{n:'黑',c:'#1D1D1F'},{n:'白',c:'#FFFFFF'},{n:'灰',c:'#8E8E93'},{n:'红',c:'#E24B4A'},{n:'蓝',c:'#378ADD'},{n:'绿',c:'#639922'},{n:'黄',c:'#EF9F27'},{n:'米',c:'#E8DCC8'},{n:'粉',c:'#ED93B1'},{n:'棕',c:'#8B5E3C'}];
-const CATS=['衣物','工具','食品','日用','数码','书籍','其他'];
+const DEF_CATS=['衣物','工具','食品','日用','数码','书籍','其他'];
 const CAT_ICON={'衣物':'👕','工具':'🔧','食品':'🍫','日用':'🧴','数码':'🔌','书籍':'📚','其他':'📦'};
-const USES=['日常穿着','换季收纳','居家备用','维修工具','充电数码','纪念收藏','清洁日用','其他'];
+const DEF_USES=['日常穿着','换季收纳','居家备用','维修工具','充电数码','纪念收藏','清洁日用','其他'];
+const EXTRA_ICONS=['📌','🏷️','🎁','🪴','🧸','⚽','💊','📎','🔑','🕯️'];
 const AI_GUESSES=[
   {name:'无线蓝牙耳机',cat:'数码',color:'黑',use:'充电数码'},
   {name:'折叠雨伞',cat:'日用',color:'蓝',use:'居家备用'},
@@ -353,7 +356,7 @@ const AI_GUESSES=[
   {name:'巧克力礼盒',cat:'食品',color:'棕',use:'其他'}
 ];
 
-let DB={items:[],locations:[],member:{level:'free',tokens:10,total:10,tags:0}};
+let DB={items:[],locations:[],cats:[...DEF_CATS],uses:[...DEF_USES],member:{level:'free',tokens:10,total:10,tags:0}};
 
 function seed(){
   const L=[
@@ -375,12 +378,18 @@ function seed(){
     {id:'i5',name:'儿童相册',cat:'书籍',loc:'r3a',img:null,color:'粉',use:'纪念收藏',t:now-1000*60*60*100,tags:['纪念']},
     {id:'i6',name:'生日蜡烛',cat:'日用',loc:'r2a',img:null,color:'黄',use:'其他',t:now-1000*60*60*120,tags:['聚会']}
   ];
-  return {items:I,locations:L,member:{level:'free',tokens:10,total:10,tags:0}};
+  return {items:I,locations:L,cats:[...DEF_CATS],uses:[...DEF_USES],member:{level:'free',tokens:10,total:10,tags:0}};
 }
 function load(){
-  try{const s=localStorage.getItem(KEY);DB=s?JSON.parse(s):seed()}catch(e){DB=seed()}
+  // 兼容旧版 v2 数据：迁移分类/用途字段
+  let oldData=null;
+  try{const s=localStorage.getItem('jiawuzhi_demo_v2');if(s)oldData=JSON.parse(s)}catch(e){}
+  try{const s=localStorage.getItem(KEY);DB=s?JSON.parse(s):(oldData||seed())}catch(e){DB=oldData||seed()}
   if(!DB.locations||!DB.items)DB=seed();
   if(!DB.member)DB.member={level:'free',tokens:10,total:10,tags:0};
+  if(!DB.cats)DB.cats=[...DEF_CATS];
+  if(!DB.uses)DB.uses=[...DEF_USES];
+  if(oldData&&!localStorage.getItem(KEY)){save();localStorage.removeItem('jiawuzhi_demo_v2')}
 }
 function save(){localStorage.setItem(KEY,JSON.stringify(DB))}
 function uid(p){return p+Date.now().toString(36)+Math.floor(Math.random()*999).toString(36)}
@@ -443,38 +452,93 @@ function renderFind(){
 }
 
 /* ================= 位置 ================= */
+function locTreeHtml(parentId,depth){
+  const kids=DB.locations.filter(x=>x.parent===parentId);
+  if(!kids.length)return '';
+  return kids.map(k=>{
+    const cnt=DB.items.filter(i=>i.loc===k.id).length;
+    const grand=kids.filter(x=>x.parent===k.id).length;
+    return `<div class="subloc" style="padding-left:${depth*14}px" onclick="showLocItems('${k.id}')">
+      <span class="dot"></span>${esc(k.name)}
+      <span class="cnt">${cnt} 件${grand?' · '+grand+' 子级':''}</span>
+      <span style="color:var(--muted);padding:2px 6px;cursor:pointer" onclick="event.stopPropagation();editLoc('${k.id}')">⋯</span>
+    </div>`+locTreeHtml(k.id,depth+1);
+  }).join('');
+}
 function renderLoc(){
   const roots=DB.locations.filter(l=>!l.parent);
   document.getElementById('locList').innerHTML=roots.map(l=>{
-    const kids=DB.locations.filter(x=>x.parent===l.id);
-    const cnt=DB.items.filter(i=>i.loc===l.id||kids.some(k=>k.id===i.loc)).length;
+    const cnt=DB.items.filter(i=>i.loc===l.id).length;
+    const descendants=[];
+    (function collect(pid){DB.locations.filter(x=>x.parent===pid).forEach(k=>{descendants.push(k.id);collect(k.id)})})(l.id);
+    const totalCnt=DB.items.filter(i=>i.loc===l.id||descendants.includes(i.loc)).length;
     return `<div class="loc" id="loc-${l.id}">
       <div class="loc-head" onclick="toggleLoc('${l.id}')">
         <div class="ic room"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/></svg></div>
-        <div class="txt"><b>${esc(l.name)}</b><span>${cnt} 件物品 · ${kids.length} 个子位置</span></div>
+        <div class="txt"><b>${esc(l.name)}</b><span>${totalCnt} 件物品 · ${descendants.length} 个子位置</span></div>
+        <span style="color:var(--muted);padding:4px 8px;cursor:pointer" onclick="event.stopPropagation();editLoc('${l.id}')">⋯</span>
         <svg class="arrow" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M9 18l6-6-6-6"/></svg>
       </div>
       <div class="loc-body">
-        ${kids.map(k=>`<div class="subloc" onclick="showLocItems('${k.id}')"><span class="dot"></span>${esc(k.name)}<span class="cnt">${DB.items.filter(i=>i.loc===k.id).length} 件 ›</span></div>`).join('')||'<div class="subloc" style="color:var(--muted)">暂无子位置</div>'}
+        ${locTreeHtml(l.id,0)||'<div class="subloc" style="color:var(--muted)">暂无子位置</div>'}
         <div class="subloc" onclick="showLocItems('${l.id}')" style="color:var(--accent)"><span class="dot" style="background:var(--accent)"></span>查看此位置全部物品<span class="cnt">›</span></div>
+        <div class="subloc" onclick="addLocation('${l.id}')" style="color:var(--blue)"><span class="dot" style="background:var(--blue)"></span>＋ 在此位置下新建子位置</div>
       </div>
     </div>`;
   }).join('');
 }
 function toggleLoc(id){document.getElementById('loc-'+id).classList.toggle('open')}
+function editLoc(id){
+  const l=DB.locations.find(x=>x.id===id);if(!l)return;
+  const childCnt=DB.locations.filter(x=>x.parent===id).length;
+  const itemCnt=DB.items.filter(i=>i.loc===id).length;
+  document.getElementById('infoContent').innerHTML=`
+    <h2>编辑位置</h2>
+    <div class="field"><label>位置名称</label><input id="editLocName" value="${esc(l.name)}"></div>
+    <div class="field"><label>上级位置</label><select id="editLocParent">
+      <option value="">（无 · 作为顶级房间）</option>
+      ${DB.locations.filter(x=>x.id!==id&&!isDescendant(x.id,id)).map(x=>`<option value="${x.id}" ${x.id===l.parent?'selected':''}>${esc(fullLoc(x.id))}</option>`).join('')}
+    </select></div>
+    <p class="sub" style="margin-top:12px">含 ${itemCnt} 件物品 · ${childCnt} 个子位置</p>
+    <div class="tip warn" style="margin-top:8px"><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 9v4M12 17h.01M10.3 3.9L1.8 18a2 2 0 0 0 1.7 3h17a2 2 0 0 0 1.7-3L13.7 3.9a2 2 0 0 0-3.4 0z"/></svg><span>删除后，该位置的物品会移到「未分类」，不会丢失。</span></div>
+    <div class="btn-row"><button class="btn ghost" onclick="deleteLoc('${id}')">删除位置</button><button class="btn primary" onclick="saveLoc('${id}')">保存</button></div>`;
+  show('infoSheet');
+}
+function isDescendant(candidateId,ancestorId){
+  let cur=DB.locations.find(x=>x.id===candidateId);
+  while(cur&&cur.parent){if(cur.parent===ancestorId)return true;cur=DB.locations.find(x=>x.id===cur.parent)}
+  return false;
+}
+function saveLoc(id){
+  const l=DB.locations.find(x=>x.id===id);if(!l)return;
+  const name=(document.getElementById('editLocName').value||'').trim();
+  if(!name){toast('名称不能为空');return}
+  const parent=document.getElementById('editLocParent').value||null;
+  l.name=name;l.parent=parent;save();hide('infoSheet');renderLoc();toast('位置已更新');
+}
+function deleteLoc(id){
+  if(!confirm('确定删除这个位置？物品会移到「未分类」。'))return;
+  DB.items.filter(i=>i.loc===id).forEach(i=>i.loc='__uncategorized__');
+  DB.locations=DB.locations.filter(x=>x.id!==id&&x.parent!==id);
+  save();hide('infoSheet');renderLoc();toast('位置已删除');
+}
 function showLocItems(id){
   const r=DB.items.filter(i=>i.loc===id);
   document.getElementById('infoContent').innerHTML=`<h2>${esc(fullLoc(id))}</h2><p class="sub" style="margin-bottom:14px">共 ${r.length} 件物品</p>`+(r.length?r.map(itemCard).join(''):emptyHTML('这个位置还是空的'));
   show('infoSheet');
 }
-function addLocation(){
-  const name=prompt('新位置名称（如：阳台储物柜）');
+function addLocation(parentId){
+  const name=prompt(parentId?'子位置名称（如：第二层 / 抽屉）':'新位置名称（如：阳台储物柜）');
   if(!name)return;
-  const parent=prompt('父级位置名称（留空则为房间，如：客厅）')||null;
-  let pid=null;
-  if(parent){let p=DB.locations.find(l=>l.name===parent);if(!p){p={id:uid('r'),name:parent,parent:null};DB.locations.push(p)}pid=p.id}
+  let pid=parentId||null;
+  if(!pid){
+    const parent=prompt('上级位置（留空=顶级房间，如：客厅）')||'';
+    if(parent){let p=DB.locations.find(l=>l.name===parent);if(!p){p={id:uid('r'),name:parent,parent:null};DB.locations.push(p)}pid=p.id}
+  }
   DB.locations.push({id:uid('r'),name:name.trim(),parent:pid});
-  save();renderLoc();toast('位置已添加');
+  save();renderLoc();
+  if(pid){const el=document.getElementById('loc-'+pid);if(el)el.classList.add('open')}
+  toast('位置「'+name.trim()+'」已添加');
 }
 
 /* ================= 物品详情 ================= */
@@ -485,10 +549,10 @@ function showItem(id){
     <div style="margin:12px 0">
       ${i.img?`<img src="${i.img}" style="width:100%;border-radius:12px;max-height:220px;object-fit:cover">`:`<div style="height:120px;border-radius:12px;background:var(--bg);display:flex;align-items:center;justify-content:center;font-size:56px">${CAT_ICON[i.cat]||'📦'}</div>`}
     </div>
-    <div class="list-row"><span class="l">📁 类别</span><span class="r">${i.cat}</span></div>
-    ${i.color?`<div class="list-row"><span class="l">🎨 颜色</span><span class="r"><span style="display:inline-block;width:11px;height:11px;border-radius:50%;background:${colorHex(i.color)};border:1px solid var(--line);vertical-align:middle;margin-right:5px"></span>${i.color}</span></div>`:''}
-    ${i.use?`<div class="list-row"><span class="l">🎯 用途</span><span class="r">${esc(i.use)}</span></div>`:''}
-    <div class="list-row"><span class="l">📍 位置</span><span class="r">${fullLoc(i.loc)}</span></div>
+    <div class="list-row" onclick="editItemField('${i.id}','cat')" style="cursor:pointer"><span class="l">📁 类别</span><span class="r">${i.cat} <span style="color:var(--accent)">✎</span></span></div>
+    ${i.color?`<div class="list-row" onclick="editItemField('${i.id}','color')" style="cursor:pointer"><span class="l">🎨 颜色</span><span class="r"><span style="display:inline-block;width:11px;height:11px;border-radius:50%;background:${colorHex(i.color)};border:1px solid var(--line);vertical-align:middle;margin-right:5px"></span>${i.color} <span style="color:var(--accent)">✎</span></span></div>`:''}
+    ${i.use?`<div class="list-row" onclick="editItemField('${i.id}','use')" style="cursor:pointer"><span class="l">🎯 用途</span><span class="r">${esc(i.use)} <span style="color:var(--accent)">✎</span></span></div>`:''}
+    <div class="list-row" onclick="editItemField('${i.id}','loc')" style="cursor:pointer"><span class="l">📍 位置</span><span class="r">${fullLoc(i.loc)} <span style="color:var(--accent)">✎</span></span></div>
     <div class="list-row"><span class="l">🕐 记录于</span><span class="r">${fmt(i.t)}</span></div>
     ${i.tags.length?`<div class="list-row"><span class="l">🏷 标签</span><span class="r">${i.tags.map(t=>'#'+esc(t)).join(' ')}</span></div>`:''}
     <div class="nfc-write-box" style="margin-bottom:14px"><b>📶 NFC 贴绑定</b><br>把预编码 NFC 贴贴到收纳处，碰一下即定位这件物品所在位置。${i.nfcUid?`<br><span style="color:var(--green)">✓ 已绑定：${esc(i.nfcUid)}</span>`:''}</div>
@@ -499,6 +563,48 @@ function showItem(id){
 function deleteItem(id){
   if(!confirm('确定删除这件物品？'))return;
   DB.items=DB.items.filter(x=>x.id!==id);save();hide('infoSheet');renderHome();renderFind();toast('已删除');
+}
+function editItemField(id,field){
+  const i=DB.items.find(x=>x.id===id);if(!i)return;
+  const labels={cat:'类别',color:'颜色',use:'用途',loc:'位置'};
+  let opts='';
+  if(field==='cat')opts=DB.cats.map(c=>`<option value="${esc(c)}" ${c===i.cat?'selected':''}>${catIcon(c)} ${esc(c)}</option>`).join('')+`<option value="__custom__">＋ 自定义类别…</option>`;
+  else if(field==='use')opts=DB.uses.map(u=>`<option value="${esc(u)}" ${u===i.use?'selected':''}>${esc(u)}</option>`).join('')+`<option value="__custom__">＋ 自定义用途…</option>`;
+  else if(field==='color')opts=COLORS.map(c=>`<option value="${c.n}" ${c.n===i.color?'selected':''}>${c.n}</option>`).join('');
+  else if(field==='loc')opts=DB.locations.map(l=>`<option value="${l.id}" ${l.id===i.loc?'selected':''}>${esc(fullLoc(l.id))}</option>`).join('');
+  document.getElementById('infoContent').innerHTML=`
+    <h2>修改${labels[field]}</h2>
+    <p class="sub" style="margin-bottom:14px">${esc(i.name)}</p>
+    <div class="field"><label>选择${labels[field]}</label>
+      ${field==='color'?`<div class="color-grid" id="efColor">${COLORS.map(c=>`<span class="color-opt ${c.n===i.color?'on':''}" style="background:${c.c}" title="${c.n}" onclick="pickEditColor(this)"></span>`).join('')}</div>`:`<select id="efValue" onchange="onEditCustom(this,'${field}','${id}')">${opts}</select>`}
+    </div>
+    <div class="btn-row"><button class="btn ghost" onclick="showItem('${id}')">取消</button><button class="btn primary" onclick="saveItemField('${id}','${field}')">保存</button></div>`;
+  show('infoSheet');
+}
+function pickEditColor(el){document.querySelectorAll('#efColor .color-opt').forEach(x=>x.classList.remove('on'));el.classList.add('on')}
+function onEditCustom(sel,field,id){
+  if(sel.value!=='__custom__')return;
+  const label=field==='cat'?'类别':'用途';
+  const val=(prompt(`新${label}名称：`)||'').trim();
+  if(!val){editItemField(id,field);return}
+  const list=field==='cat'?DB.cats:DB.uses;
+  if(!list.includes(val))list.push(val);
+  save();
+  const opt=document.createElement('option');opt.value=val;opt.textContent=val;
+  sel.insertBefore(opt,sel.lastElementChild);sel.value=val;
+  toast(`${label}「${val}」已添加`);
+}
+function saveItemField(id,field){
+  const i=DB.items.find(x=>x.id===id);if(!i)return;
+  if(field==='color'){
+    const on=document.querySelector('#efColor .color-opt.on');
+    if(on)i.color=COLORS[[...document.querySelectorAll('#efColor .color-opt')].indexOf(on)].n;
+  }else{
+    const v=document.getElementById('efValue').value;
+    if(v==='__custom__'){toast('请先选择具体值');return}
+    i[field]=v;
+  }
+  save();showItem(id);renderHome();renderFind();toast('已更新');
 }
 
 /* ================= 录入：拍照 / NFC ================= */
@@ -544,7 +650,7 @@ function onPick(e){
     // 真实调用本地服务器的 AI 代理
     fetch('/api/vision',{
       method:'POST',headers:{'Content-Type':'application/json'},
-      body:JSON.stringify({image_url:dataUrl})
+      body:JSON.stringify({image_url:dataUrl,cats:DB.cats,uses:DB.uses})
     }).then(r=>r.json()).then(res=>{
       if(res.ok&&res.result){
         finishAI(res.result,res.model);
@@ -579,9 +685,9 @@ function compressImage(file,maxSide,cb){
 function finishAI(result,modelName){
   document.getElementById('camFrame').classList.remove('scanning');
   if(result&&result.name){
-    aiGuess={name:result.name,cat:CATS.includes(result.cat)?result.cat:'其他',
+    aiGuess={name:result.name,cat:DB.cats.includes(result.cat)?result.cat:(DB.cats[0]||'其他'),
       color:COLORS.some(c=>c.n===result.color)?result.color:'米',
-      use:USES.includes(result.use)?result.use:'其他',
+      use:DB.uses.includes(result.use)?result.use:(DB.uses[0]||'其他'),
       confidence:result.confidence||0.9};
   }else{
     aiGuess=AI_GUESSES[Math.floor(Math.random()*AI_GUESSES.length)];aiGuess.confidence=0.9;modelName=null;
@@ -642,19 +748,36 @@ function handleNFCTag(tag){
   document.getElementById('nfcResult').innerHTML=`<div class="result-tag" style="background:#E8F1FF;color:var(--blue)">已绑定到位置：${esc(fullLoc(pickedLoc))}</div><div style="font-size:12px;color:var(--muted);margin-bottom:6px">记录一件物品到这个位置：</div>`;
   renderSaveForm('',true);
 }
+function catIcon(c){return CAT_ICON[c]||EXTRA_ICONS[DB.cats.indexOf(c)%EXTRA_ICONS.length]||'🏷️'}
 function renderSaveForm(defName,isNFC){
   const locOpts=DB.locations.map(l=>`<option value="${l.id}" ${l.id===pickedLoc?'selected':''}>${esc(fullLoc(l.id))}</option>`).join('');
-  const catChips=CATS.map(c=>`<span class="chip ${c===pickedCat?'on':''}" onclick="pickCat('${c}',this)">${CAT_ICON[c]} ${c}</span>`).join('');
+  const catChips=DB.cats.map(c=>`<span class="chip ${c===pickedCat?'on':''}" onclick="pickCat('${esc(c)}',this)">${catIcon(c)} ${esc(c)}</span>`).join('')+`<span class="chip" style="border-style:dashed;color:var(--accent)" onclick="addCustom('cat')">＋ 自定义类别</span>`;
   const colorGrid=COLORS.map(o=>`<span class="color-opt ${o.n===pickedColor?'on':''}" style="background:${o.c}" title="${o.n}" onclick="pickColor('${o.n}',this)"></span>`).join('');
-  const useOpts=USES.map(u=>`<option value="${u}" ${u===pickedUse?'selected':''}>${u}</option>`).join('');
+  const useOpts=DB.uses.map(u=>`<option value="${esc(u)}" ${u===pickedUse?'selected':''}>${esc(u)}</option>`).join('')+`<option value="__custom__">＋ 自定义用途…</option>`;
   document.getElementById('saveForm').innerHTML=`
     <div class="field"><label>物品名称</label><input id="fName" placeholder="例如：备用充电宝" value="${esc(defName)}"></div>
-    <div class="field"><label>类别</label><div class="chips" id="catChips">${catChips}</div></div>
+    <div class="field"><label>类别 <span style="font-size:11px;color:var(--accent)">（可自定义）</span></label><div class="chips" id="catChips">${catChips}</div></div>
     <div class="field"><label>颜色${aiGuess?'（AI 已识别，可改）':''}</label><div class="color-grid" id="colorGrid">${colorGrid}</div></div>
-    <div class="field"><label>用途${aiGuess?'（AI 已识别，可改）':''}</label><select id="fUse">${useOpts}</select></div>
-    <div class="field"><label>放在哪里</label><select id="fLoc">${locOpts}</select></div>
+    <div class="field"><label>用途${aiGuess?'（AI 已识别，可改）':''}</label><select id="fUse" onchange="onUseChange(this)">${useOpts}</select></div>
+    <div class="field"><label>放在哪里 <span style="font-size:11px;color:var(--accent)">（可自定义，去「位置」页建）</span></label><select id="fLoc">${locOpts}</select></div>
     <div class="nfc-write-box"><b>📶 想贴 NFC 标签？</b><br>保存后可在物品详情里「写入/绑定 NFC 贴」，贴到收纳箱上，下次碰一下就找到。</div>
     <div class="btn-row"><button class="btn primary" onclick="saveItem()">保存入库</button></div>`;
+}
+function onUseChange(sel){
+  if(sel.value==='__custom__'){addCustom('use')}
+}
+function addCustom(type){
+  const label=type==='cat'?'类别':'用途';
+  const val=(prompt(`新${label}名称：`)||'').trim();
+  if(!val)return;
+  const list=type==='cat'?DB.cats:DB.uses;
+  if(list.includes(val)){toast('已存在');return}
+  list.push(val);save();
+  if(type==='cat')pickedCat=val; else pickedUse=val;
+  // 只重绘表单，保留已填名称
+  const oldName=document.getElementById('fName')?.value||'';
+  renderSaveForm(oldName);
+  toast(`${label}「${val}」已添加`);
 }
 function pickCat(c,el){
   pickedCat=c;
@@ -701,6 +824,41 @@ function exportData(){
   toast('已导出');
 }
 function resetDemo(){if(confirm('恢复初始演示数据？当前记录将清空。')){DB=seed();save();renderHome();renderLoc();toast('已重置')}}
+
+/* ================= 自定义分类管理 ================= */
+let taxTab='cat';
+function manageTaxonomy(){
+  const cats=DB.cats.map((c,i)=>`<span class="chip" style="margin:4px" onclick="removeTax('cat',${i})">${catIcon(c)} ${esc(c)} <span style="color:var(--accent)">×</span></span>`).join('');
+  const uses=DB.uses.map((u,i)=>`<span class="chip" style="margin:4px" onclick="removeTax('use',${i})">${esc(u)} <span style="color:var(--accent)">×</span></span>`).join('');
+  document.getElementById('infoContent').innerHTML=`
+    <h2>自定义分类</h2><p class="sub" style="margin-bottom:12px">点标签可删除（已有物品的标签不受影响）</p>
+    <div class="chips" style="border-bottom:1px solid var(--line);padding-bottom:10px;margin-bottom:12px">
+      <span class="chip ${taxTab==='cat'?'on':''}" onclick="taxTab='cat';manageTaxonomy()">类别 (${DB.cats.length})</span>
+      <span class="chip ${taxTab==='use'?'on':''}" onclick="taxTab='use';manageTaxonomy()">用途 (${DB.uses.length})</span>
+    </div>
+    ${taxTab==='cat'?cats:uses}
+    <div class="field"><label>新增${taxTab==='cat'?'类别':'用途'}</label>
+      <div style="display:flex;gap:8px;margin-top:6px"><input id="taxNew" placeholder="输入名称" style="flex:1;border:1px solid var(--line);border-radius:10px;padding:10px 12px;font-family:inherit">
+      <button class="btn primary" style="width:auto;padding:10px 18px" onclick="addTax()">添加</button></div>
+    </div>
+    <div class="tip" style="margin-top:16px"><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><path d="M12 16v-4M12 8h.01"/></svg><span>AI 识别时会优先用你自定义的类别/用途来归类。</span></div>`;
+  show('infoSheet');
+}
+function addTax(){
+  const v=(document.getElementById('taxNew').value||'').trim();
+  if(!v){toast('请输入名称');return}
+  const list=taxTab==='cat'?DB.cats:DB.uses;
+  if(list.includes(v)){toast('已存在');return}
+  list.push(v);save();manageTaxonomy();toast('已添加：'+v);
+}
+function removeTax(type,index){
+  const list=type==='cat'?DB.cats:DB.uses;
+  const name=list[index];
+  if(DB.items.some(i=>(type==='cat'?i.cat:i.use)===name)){
+    if(!confirm(`「${name}」已有物品使用，删除后这些物品的标签仍保留。确定删除标签本身？`))return;
+  }
+  list.splice(index,1);save();manageTaxonomy();toast('已删除：'+name);
+}
 
 /* ================= 会员 / Token ================= */
 function showMembership(){

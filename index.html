@@ -338,6 +338,15 @@ h2{font-size:17px;font-weight:600}
     </div>
   </div>
 
+  <!-- 通用输入/确认弹层（替代被手机浏览器拦截的 prompt/confirm） -->
+  <div class="sheet-mask" id="dialogSheet">
+    <div class="sheet">
+      <div class="grab"></div>
+      <span class="close" onclick="hide('dialogSheet')">×</span>
+      <div id="dialogContent"></div>
+    </div>
+  </div>
+
   <div class="toast" id="toast"></div>
 </div>
 
@@ -517,10 +526,11 @@ function saveLoc(id){
   l.name=name;l.parent=parent;save();hide('infoSheet');renderLoc();toast('位置已更新');
 }
 function deleteLoc(id){
-  if(!confirm('确定删除这个位置？物品会移到「未分类」。'))return;
-  DB.items.filter(i=>i.loc===id).forEach(i=>i.loc='__uncategorized__');
-  DB.locations=DB.locations.filter(x=>x.id!==id&&x.parent!==id);
-  save();hide('infoSheet');renderLoc();toast('位置已删除');
+  uiConfirm('删除位置','确定删除？该位置的物品会移到「未分类」，不会丢失。',()=>{
+    DB.items.filter(i=>i.loc===id).forEach(i=>i.loc='__uncategorized__');
+    DB.locations=DB.locations.filter(x=>x.id!==id&&x.parent!==id);
+    save();hide('infoSheet');renderLoc();toast('位置已删除');
+  });
 }
 function showLocItems(id){
   const r=DB.items.filter(i=>i.loc===id);
@@ -528,13 +538,36 @@ function showLocItems(id){
   show('infoSheet');
 }
 function addLocation(parentId){
-  const name=prompt(parentId?'子位置名称（如：第二层 / 抽屉）':'新位置名称（如：阳台储物柜）');
-  if(!name)return;
-  let pid=parentId||null;
-  if(!pid){
-    const parent=prompt('上级位置（留空=顶级房间，如：客厅）')||'';
-    if(parent){let p=DB.locations.find(l=>l.name===parent);if(!p){p={id:uid('r'),name:parent,parent:null};DB.locations.push(p)}pid=p.id}
-  }
+  uiPrompt(parentId?'新建子位置':'新建位置',parentId?'如：第二层 / 抽屉 / 靠门左边':'如：阳台储物柜','',name=>{
+    if(!name)return;
+    let pid=parentId||null;
+    if(!pid){
+      // 有顶级房间时，让用户选上级而不是再弹输入框
+      if(DB.locations.filter(l=>!l.parent).length){
+        chooseParent(name);
+        return;
+      }
+    }
+    commitLocation(name,pid);
+  });
+}
+function chooseParent(name){
+  const roots=DB.locations.filter(l=>!l.parent);
+  const opts=`<option value="">（顶级房间，不归属任何位置）</option>`+
+    roots.map(l=>`<option value="${l.id}">${esc(l.name)}</option>`).join('');
+  document.getElementById('dialogContent').innerHTML=`
+    <h2>选择上级位置</h2><p class="sub" style="margin-top:8px">「${esc(name)}」放在哪个位置下面？</p>
+    <div class="field"><select id="dlgParent" style="width:100%;border:1px solid var(--line);border-radius:10px;padding:12px;font-family:inherit;margin-top:8px">${opts}</select></div>
+    <div class="btn-row"><button class="btn ghost" onclick="hide('dialogSheet')">取消</button><button class="btn primary" onclick="confirmParent()">确定</button></div>`;
+  window._pendingLocName=name;
+  show('dialogSheet');
+}
+function confirmParent(){
+  const p=document.getElementById('dlgParent').value||null;
+  const n=window._pendingLocName||'';
+  hide('dialogSheet');commitLocation(n,p);
+}
+function commitLocation(name,pid){
   DB.locations.push({id:uid('r'),name:name.trim(),parent:pid});
   save();renderLoc();
   if(pid){const el=document.getElementById('loc-'+pid);if(el)el.classList.add('open')}
@@ -561,8 +594,9 @@ function showItem(id){
   show('infoSheet');
 }
 function deleteItem(id){
-  if(!confirm('确定删除这件物品？'))return;
-  DB.items=DB.items.filter(x=>x.id!==id);save();hide('infoSheet');renderHome();renderFind();toast('已删除');
+  uiConfirm('删除物品','确定删除这件物品？此操作不可撤销。',()=>{
+    DB.items=DB.items.filter(x=>x.id!==id);save();hide('infoSheet');renderHome();renderFind();toast('已删除');
+  });
 }
 function editItemField(id,field){
   const i=DB.items.find(x=>x.id===id);if(!i)return;
@@ -585,14 +619,15 @@ function pickEditColor(el){document.querySelectorAll('#efColor .color-opt').forE
 function onEditCustom(sel,field,id){
   if(sel.value!=='__custom__')return;
   const label=field==='cat'?'类别':'用途';
-  const val=(prompt(`新${label}名称：`)||'').trim();
-  if(!val){editItemField(id,field);return}
-  const list=field==='cat'?DB.cats:DB.uses;
-  if(!list.includes(val))list.push(val);
-  save();
-  const opt=document.createElement('option');opt.value=val;opt.textContent=val;
-  sel.insertBefore(opt,sel.lastElementChild);sel.value=val;
-  toast(`${label}「${val}」已添加`);
+  uiPrompt(`新增${label}`,`输入${label}名称`,'',val=>{
+    if(!val){editItemField(id,field);return}
+    const list=field==='cat'?DB.cats:DB.uses;
+    if(!list.includes(val))list.push(val);
+    save();
+    const opt=document.createElement('option');opt.value=val;opt.textContent=val;
+    sel.insertBefore(opt,sel.lastElementChild);sel.value=val;
+    toast(`${label}「${val}」已添加`);
+  });
 }
 function saveItemField(id,field){
   const i=DB.items.find(x=>x.id===id);if(!i)return;
@@ -768,16 +803,16 @@ function onUseChange(sel){
 }
 function addCustom(type){
   const label=type==='cat'?'类别':'用途';
-  const val=(prompt(`新${label}名称：`)||'').trim();
-  if(!val)return;
-  const list=type==='cat'?DB.cats:DB.uses;
-  if(list.includes(val)){toast('已存在');return}
-  list.push(val);save();
-  if(type==='cat')pickedCat=val; else pickedUse=val;
-  // 只重绘表单，保留已填名称
-  const oldName=document.getElementById('fName')?.value||'';
-  renderSaveForm(oldName);
-  toast(`${label}「${val}」已添加`);
+  uiPrompt(`新增${label}`,`输入${label}名称，如：${type==='cat'?'药箱':'防雨防晒'}`,'',val=>{
+    if(!val)return;
+    const list=type==='cat'?DB.cats:DB.uses;
+    if(list.includes(val)){toast('已存在');return}
+    list.push(val);save();
+    if(type==='cat')pickedCat=val; else pickedUse=val;
+    const oldName=document.getElementById('fName')?.value||'';
+    renderSaveForm(oldName);
+    toast(`${label}「${val}」已添加`);
+  });
 }
 function pickCat(c,el){
   pickedCat=c;
@@ -823,7 +858,30 @@ function exportData(){
   const a=document.createElement('a');a.href=URL.createObjectURL(blob);a.download='家物志数据.json';a.click();
   toast('已导出');
 }
-function resetDemo(){if(confirm('恢复初始演示数据？当前记录将清空。')){DB=seed();save();renderHome();renderLoc();toast('已重置')}}
+function resetDemo(){uiConfirm('重置演示数据','恢复初始示例物品？当前所有记录将清空，不可撤销。',()=>{DB=seed();save();renderHome();renderLoc();toast('已重置')})}
+
+/* ================= 通用弹层（替代 prompt/confirm，手机浏览器可靠） ================= */
+let _dialogCb=null;
+function uiPrompt(title,placeholder,defaultVal,cb){
+  _dialogCb=cb;
+  document.getElementById('dialogContent').innerHTML=`
+    <h2>${esc(title)}</h2>
+    <div class="field"><input id="dlgInput" placeholder="${esc(placeholder||'')}" value="${esc(defaultVal||'')}" style="margin-top:12px"></div>
+    <div class="btn-row"><button class="btn ghost" onclick="hide('dialogSheet')">取消</button><button class="btn primary" onclick="uiPromptOK()">确定</button></div>`;
+  show('dialogSheet');
+  setTimeout(()=>{const el=document.getElementById('dlgInput');if(el){el.focus();el.onkeydown=e=>{if(e.key==='Enter')uiPromptOK()}}},100);
+}
+function uiPromptOK(){
+  const v=(document.getElementById('dlgInput')?.value||'').trim();
+  hide('dialogSheet');
+  if(_dialogCb){const cb=_dialogCb;_dialogCb=null;cb(v)}
+}
+function uiConfirm(title,msg,onYes){
+  document.getElementById('dialogContent').innerHTML=`
+    <h2>${esc(title)}</h2><p class="sub" style="margin-top:10px;line-height:1.6">${esc(msg)}</p>
+    <div class="btn-row"><button class="btn ghost" onclick="hide('dialogSheet')">取消</button><button class="btn primary" onclick="hide('dialogSheet');(${onYes})()">确定</button></div>`;
+  show('dialogSheet');
+}
 
 /* ================= 自定义分类管理 ================= */
 let taxTab='cat';
@@ -854,10 +912,10 @@ function addTax(){
 function removeTax(type,index){
   const list=type==='cat'?DB.cats:DB.uses;
   const name=list[index];
+  const doRemove=()=>{list.splice(index,1);save();manageTaxonomy();toast('已删除：'+name)};
   if(DB.items.some(i=>(type==='cat'?i.cat:i.use)===name)){
-    if(!confirm(`「${name}」已有物品使用，删除后这些物品的标签仍保留。确定删除标签本身？`))return;
-  }
-  list.splice(index,1);save();manageTaxonomy();toast('已删除：'+name);
+    uiConfirm('删除标签',`「${name}」已有物品使用，删除后这些物品的标签仍保留。确定删除标签本身？`,doRemove);
+  }else doRemove();
 }
 
 /* ================= 会员 / Token ================= */
@@ -874,9 +932,9 @@ function showMembership(){
 function upgradeVip(){DB.member.level='vip';save();hide('infoSheet');renderHome();toast('已升级会员 · 无限 AI 识别')}
 function downgradeVip(){DB.member.level='free';DB.member.tokens=5;save();hide('infoSheet');renderHome();toast('已切回免费版')}
 function buyTags(count,sku){
-  if(confirm(`购买 NFC 贴 ${sku} ${count} 枚？\n（演示：确认后模拟下单并到账）`)){
+  uiConfirm('购买 NFC 贴',`${sku} ${count} 枚（演示：确认后模拟下单并到账）`,()=>{
     DB.member.tags=(DB.member.tags||0)+count;save();renderHome();toast(`下单成功 · ${count} 枚 NFC 贴已到账`);renderMemberBars();
-  }
+  });
 }
 function bindNFC(itemId){
   const i=DB.items.find(x=>x.id===itemId);if(!i)return;

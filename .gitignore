@@ -3,6 +3,12 @@
 *.env
 !config.example.env
 
+# ===== 本地数据库（含真实数据，不上传）=====
+backend/data/*.db
+backend/data/*.db-journal
+backend/data/*.db-wal
+backend/data/*.db-shm
+
 # ===== 运行时临时文件 =====
 __pycache__/
 *.pyc

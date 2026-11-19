@@ -1,0 +1,31 @@
+{
+  "pages": [
+    "pages/index/index",
+    "pages/find/find",
+    "pages/capture/capture",
+    "pages/location/location",
+    "pages/me/me"
+  ],
+  "window": {
+    "navigationBarBackgroundColor": "#F5F5F7",
+    "navigationBarTextStyle": "black",
+    "navigationBarTitleText": "家物志",
+    "backgroundColor": "#F5F5F7",
+    "backgroundTextStyle": "light"
+  },
+  "tabBar": {
+    "color": "#86868B",
+    "selectedColor": "#FF5C1A",
+    "backgroundColor": "#FFFFFF",
+    "borderStyle": "white",
+    "list": [
+      { "pagePath": "pages/index/index", "text": "首页", "iconPath": "assets/home.png", "selectedIconPath": "assets/home-on.png" },
+      { "pagePath": "pages/find/find", "text": "找东西", "iconPath": "assets/find.png", "selectedIconPath": "assets/find-on.png" },
+      { "pagePath": "pages/capture/capture", "text": "记录", "iconPath": "assets/add.png", "selectedIconPath": "assets/add-on.png" },
+      { "pagePath": "pages/location/location", "text": "位置", "iconPath": "assets/loc.png", "selectedIconPath": "assets/loc-on.png" },
+      { "pagePath": "pages/me/me", "text": "更多", "iconPath": "assets/me.png", "selectedIconPath": "assets/me-on.png" }
+    ]
+  },
+  "style": "v2",
+  "sitemapLocation": "sitemap.json"
+}

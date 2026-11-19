@@ -1,0 +1,5 @@
+.mask { position: fixed; left:0; right:0; top:0; bottom:0; background: rgba(0,0,0,.4); z-index:100; display:flex; align-items:flex-end; }
+.detail-sheet { width:100%; background:var(--bg); border-radius:32rpx 32rpx 0 0; padding:36rpx 32rpx 60rpx; max-height:85vh; overflow-y:auto; }
+.detail-row { display:flex; justify-content:space-between; padding:24rpx 0; border-bottom:1rpx solid var(--line); font-size:28rpx; }
+.loc-opt { padding:24rpx; border-bottom:1rpx solid var(--line); font-size:28rpx; }
+.loc-opt:active { background:var(--accent-soft); }

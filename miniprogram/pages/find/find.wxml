@@ -1,0 +1,55 @@
+<view class="page">
+  <view class="h1" style="padding-top:8rpx">找东西</view>
+  <view class="sub">输入名字，告诉你它在哪</view>
+
+  <view style="display:flex;align-items:center;gap:16rpx;background:var(--surface);border:1rpx solid var(--line);border-radius:20rpx;padding:20rpx 24rpx;margin-top:28rpx">
+    <text style="color:var(--muted)">🔍</text>
+    <input placeholder="搜物品、类别、位置、颜色…" value="{{keyword}}" bindinput="onInput" confirm-type="search" style="flex:1;font-size:28rpx"/>
+    <text wx:if="{{keyword}}" style="color:var(--muted)" bindtap="clear">×</text>
+  </view>
+
+  <view class="sec-title"><text>{{keyword ? '找到 ' + results.length + ' 件' : '全部物品'}}</text></view>
+
+  <view wx:if="{{results.length === 0}}" class="empty">{{keyword ? '没找到「' + keyword + '」，换个词试试' : '还没有物品'}}</view>
+  <view wx:for="{{results}}" wx:key="id" class="card" bindtap="showItem" data-id="{{item.id}}">
+    <view style="width:96rpx;height:96rpx;border-radius:18rpx;background:var(--bg);display:flex;align-items:center;justify-content:center;font-size:48rpx;flex-shrink:0">
+      <image wx:if="{{item.image_path}}" src="{{item.image_path}}" style="width:100%;height:100%;border-radius:18rpx" mode="aspectFill"/>
+      <text wx:else>{{item.icon}}</text>
+    </view>
+    <view style="flex:1;min-width:0">
+      <view style="font-size:28rpx;font-weight:600">{{item.name}}</view>
+      <view class="sub" style="margin-top:6rpx">📍 {{item.locName}}{{item.use_scene ? ' · ' + item.use_scene : ''}}</view>
+    </view>
+    <view style="font-size:22rpx;color:var(--muted);background:var(--bg);padding:8rpx 16rpx;border-radius:24rpx">{{item.category}}</view>
+  </view>
+
+  <!-- 物品详情弹层 -->
+  <view wx:if="{{detail}}" class="mask" bindtap="closeDetail">
+    <view class="detail-sheet" catchtap="noop">
+      <view style="display:flex;justify-content:space-between;align-items:center;margin-bottom:20rpx">
+        <view class="h2">{{detail.name}}</view>
+        <text style="font-size:40rpx;color:var(--muted)" bindtap="closeDetail">×</text>
+      </view>
+      <view wx:if="{{detail.image_path}}" style="margin-bottom:20rpx"><image src="{{detail.image_path}}" style="width:100%;height:300rpx;border-radius:20rpx" mode="aspectFill"/></view>
+      <view class="detail-row"><text>📁 类别</text><text>{{detail.category}}</text></view>
+      <view class="detail-row" wx:if="{{detail.color}}"><text>🎨 颜色</text><text>{{detail.color}}</text></view>
+      <view class="detail-row" wx:if="{{detail.use_scene}}"><text>🎯 用途</text><text>{{detail.use_scene}}</text></view>
+      <view class="detail-row" bindtap="editLoc"><text>📍 位置</text><text>{{detail.locName}} ›</text></view>
+      <view class="detail-row"><text>🕐 记录于</text><text>{{detail.timeAgo}}</text></view>
+      <view class="btn-row">
+        <button class="btn ghost" bindtap="deleteItem">删除</button>
+        <button class="btn primary" bindtap="closeDetail">完成</button>
+      </view>
+    </view>
+  </view>
+
+  <!-- 改位置：选新位置 -->
+  <view wx:if="{{showLocPicker}}" class="mask" bindtap="closeLocPicker">
+    <view class="detail-sheet" catchtap="noop">
+      <view class="h2" style="margin-bottom:16rpx">移动到新位置</view>
+      <scroll-view scroll-y style="max-height:600rpx">
+        <view wx:for="{{allLocs}}" wx:key="id" class="loc-opt" bindtap="pickLoc" data-id="{{item.id}}">{{item.name}}</view>
+      </scroll-view>
+    </view>
+  </view>
+</view>

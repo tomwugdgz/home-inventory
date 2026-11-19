@@ -1,0 +1,79 @@
+<view class="page">
+  <view class="h1" style="padding-top:8rpx">记录物品</view>
+  <view class="sub">拍照 AI 自动认，或 NFC 贴一下</view>
+
+  <view class="tabs">
+    <view class="tab {{mode==='cam'?'on':''}}" bindtap="setMode" data-m="cam">📷 拍照识别 <text class="token-pill">✦ 会员</text></view>
+    <view class="tab {{mode==='nfc'?'on':''}}" bindtap="setMode" data-m="nfc">📶 NFC 感应</view>
+  </view>
+
+  <!-- 拍照模式 -->
+  <block wx:if="{{mode==='cam'}}">
+    <view class="tip">本次识别消耗 1 个视觉 Token（剩余 {{member.level==='vip'?'∞':member.tokens_left}}）</view>
+    <view class="cam-box">
+      <image wx:if="{{imagePath}}" src="{{imagePath}}" class="cam-img" mode="aspectFill"/>
+      <view wx:else class="cam-ph" bindtap="takePhoto">
+        <view style="font-size:80rpx">📷</view>
+        <view class="sub" style="margin-top:16rpx">点此拍照或选相册</view>
+      </view>
+      <view wx:if="{{scanning}}" class="scanline"></view>
+    </view>
+    <button wx:if="{{!imagePath}}" class="btn ghost" bindtap="takePhoto">选择照片</button>
+
+    <view wx:if="{{aiResult}}" class="ai-result">
+      <view style="color:var(--accent);font-size:26rpx;font-weight:600;margin-bottom:12rpx">✦ AI 识别完成 · {{aiResult.model}}</view>
+      <view style="font-size:28rpx">识别为：<text style="font-weight:600;font-size:32rpx">{{form.name}}</text> · 置信度 {{aiResult.confidence}}%</view>
+      <view style="margin-top:12rpx">
+        <text class="ai-field">🎨 {{form.color}}</text>
+        <text class="ai-field">🎯 {{form.use_scene}}</text>
+        <text class="ai-field">📦 {{form.category}}</text>
+      </view>
+    </view>
+
+    <view wx:if="{{showForm}}" class="form">
+      <view class="field"><view class="label">物品名称</view><input value="{{form.name}}" bindinput="onField" data-f="name" placeholder="如：备用充电宝"/></view>
+      <view class="field">
+        <view class="label">类别 <text style="color:var(--accent);font-size:22rpx">（可自定义）</text></view>
+        <view class="chips">
+          <view wx:for="{{cats}}" wx:key="index" class="chip {{form.category===item.name?'on':''}}" bindtap="pickCat" data-c="{{item.name}}">{{item.icon}} {{item.name}}</view>
+          <view class="chip dashed" bindtap="addCustom" data-k="cat">＋ 自定义</view>
+        </view>
+      </view>
+      <view class="field">
+        <view class="label">颜色</view>
+        <view class="colors">
+          <view wx:for="{{colors}}" wx:key="n" class="color {{form.color===item.n?'on':''}}" style="background:{{item.c}}" bindtap="pickColor" data-n="{{item.n}}"></view>
+        </view>
+      </view>
+      <view class="field">
+        <view class="label">用途</view>
+        <picker mode="selector" range="{{uses}}" value="{{useIndex}}" bindchange="onUse">
+          <view class="picker-view">{{form.use_scene}} ▾</view>
+        </picker>
+        <view class="chip dashed" style="margin-top:12rpx;display:inline-flex" bindtap="addCustom" data-k="use">＋ 自定义用途</view>
+      </view>
+      <view class="field">
+        <view class="label">放在哪里</view>
+        <picker mode="selector" range="{{locNames}}" value="{{locIndex}}" bindchange="onLoc">
+          <view class="picker-view">{{locNames[locIndex]}} ▾</view>
+        </picker>
+      </view>
+      <button class="btn primary" bindtap="saveItem" style="margin-top:32rpx">保存入库</button>
+    </view>
+  </block>
+
+  <!-- NFC 模式 -->
+  <block wx:if="{{mode==='nfc'}}">
+    <view class="nfc-wave"><view class="nfc-core">📶</view></view>
+    <view class="sub" style="text-align:center">读取 NFC 贴，直接定位收纳处</view>
+    <button class="btn blue" bindtap="readNfc" style="margin-top:32rpx">开始感应</button>
+    <button class="btn ghost" bindtap="scanCode" style="margin-top:16rpx">扫二维码（iOS 兜底）</button>
+    <view wx:if="{{nfcResult}}" class="ai-result">
+      <view style="color:var(--blue);font-weight:600;margin-bottom:8rpx">✓ 读到标签 {{nfcResult.uid}}</view>
+      <view>绑定到：{{nfcResult.locName}}</view>
+    </view>
+    <view class="tip warn">iPhone 小程序无法写 NFC，正式版用「预编码 UID 贴 + 二维码兜底」，安卓走原生 NDEF。此处为流程演示。</view>
+  </block>
+
+  <view wx:if="{{error}}" class="tip warn">{{error}}</view>
+</view>

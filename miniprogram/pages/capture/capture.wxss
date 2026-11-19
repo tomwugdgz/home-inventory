@@ -1,0 +1,24 @@
+.tabs { display:flex; gap:16rpx; margin:28rpx 0 20rpx; background:var(--surface); border-radius:20rpx; padding:8rpx; }
+.tab { flex:1; text-align:center; padding:20rpx; font-size:26rpx; border-radius:16rpx; color:var(--muted); }
+.tab.on { background:var(--accent-soft); color:var(--accent); font-weight:600; }
+.cam-box { width:100%; aspect-ratio:1; border-radius:24rpx; background:#1D1D1F; overflow:hidden; position:relative; margin:20rpx 0; display:flex; align-items:center; justify-content:center; }
+.cam-img { width:100%; height:100%; }
+.cam-ph { color:#8E8E93; text-align:center; padding:40rpx; }
+.scanline { position:absolute; left:0; right:0; height:6rpx; background:var(--accent); box-shadow:0 0 24rpx 6rpx var(--accent); animation:scan 1.6s ease-in-out infinite; }
+@keyframes scan { 0%,100%{top:6%;opacity:.5} 50%{top:92%;opacity:1} }
+.ai-result { background:var(--surface); border:1rpx solid var(--line); border-radius:20rpx; padding:28rpx; margin-top:24rpx; font-size:26rpx; }
+.ai-field { display:inline-block; background:#F0EAFF; color:var(--purple,#8E5CFF); font-size:22rpx; padding:10rpx 16rpx; border-radius:12rpx; margin:6rpx 8rpx 0 0; }
+.form { margin-top:32rpx; }
+.field { margin-bottom:28rpx; }
+.label { font-size:24rpx; color:var(--muted); margin-bottom:12rpx; }
+.field input, .picker-view { width:100%; box-sizing:border-box; border:1rpx solid var(--line); border-radius:16rpx; padding:22rpx; font-size:28rpx; background:var(--surface); }
+.chips { display:flex; flex-wrap:wrap; gap:12rpx; }
+.chip { padding:14rpx 22rpx; border-radius:30rpx; background:var(--bg); border:1rpx solid var(--line); font-size:24rpx; }
+.chip.on { background:var(--accent); color:#fff; border-color:var(--accent); }
+.chip.dashed { border-style:dashed; color:var(--accent); }
+.colors { display:flex; flex-wrap:wrap; gap:16rpx; }
+.color { width:56rpx; height:56rpx; border-radius:50%; border:4rpx solid transparent; box-shadow:0 0 0 1rpx var(--line); }
+.color.on { border-color:var(--ink); }
+.nfc-wave { width:240rpx; height:240rpx; margin:60rpx auto 30rpx; border-radius:50%; background:#E8F1FF; display:flex; align-items:center; justify-content:center; }
+.nfc-core { width:120rpx; height:120rpx; border-radius:50%; background:var(--blue); color:#fff; display:flex; align-items:center; justify-content:center; font-size:56rpx; }
+.token-pill { background:var(--accent-soft); color:var(--accent); font-size:20rpx; padding:4rpx 12rpx; border-radius:20rpx; font-weight:600; }

@@ -1,0 +1,17 @@
+/* 家物志 · 首页局部样式（全局样式见 app.wxss） */
+
+/* 快捷入口按压反馈 */
+.qbtn { transition: opacity .15s ease, transform .15s ease; }
+.qbtn:active { opacity: .82; transform: scale(.97); }
+
+/* 会员条按压反馈 */
+.member-bar:active { opacity: .9; }
+
+/* 卡片内图片占满容器，避免小程序 image 默认留白 */
+.card image { display: block; }
+
+/* 「查看全部」点击态 */
+.sec-title text:last-child:active { opacity: .55; }
+
+/* 空态图标与文字间距微调 */
+.empty { letter-spacing: 1rpx; }

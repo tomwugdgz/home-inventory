@@ -1,0 +1,26 @@
+{
+  "description": "家物志 - 家庭物品收纳识别小程序",
+  "appid": "touristappid",
+  "projectname": "jiawuzhi-miniprogram",
+  "miniprogramRoot": "./",
+  "compileType": "miniprogram",
+  "setting": {
+    "urlCheck": false,
+    "es6": true,
+    "enhance": true,
+    "postcss": true,
+    "minified": true,
+    "newFeature": true,
+    "coverView": true,
+    "nodeModules": false,
+    "autoAudits": false,
+    "showShadowRootInWxmlPanel": true,
+    "scopeDataCheck": false,
+    "uglifyFileName": false,
+    "checkInvalidKey": true,
+    "checkSiteMap": false,
+    "uploadWithSourceMap": true
+  },
+  "libVersion": "3.5.0",
+  "condition": {}
+}

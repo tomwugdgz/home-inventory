@@ -80,10 +80,16 @@ class Handler(SimpleHTTPRequestHandler):
             body = self.rfile.read(length)
             data = json.loads(body.decode("utf-8"))
             image_url = data.get("image_url", "")
+            user_cats = data.get("cats", [])   # 用户自定义类别
+            user_uses = data.get("uses", [])   # 用户自定义用途
 
             if not image_url:
                 self._send_json({"error": "缺少 image_url"}, status=400)
                 return
+
+            # 把用户自定义分类注入提示词，让 AI 优先用用户自己的标签
+            cat_hint = "、".join(user_cats) if user_cats else "衣物/工具/食品/日用/数码/书籍/其他"
+            use_hint = "、".join(user_uses) if user_uses else "日常穿着/换季收纳/居家备用/维修工具/充电数码/纪念收藏/清洁日用/其他"
 
             # 构造给视觉模型的请求：强制 JSON 输出，抽取颜色/用途/物品名
             payload = {
@@ -96,9 +102,10 @@ class Handler(SimpleHTTPRequestHandler):
                             "text": (
                                 "你是家庭收纳助手。请识别图片中的物品，只输出一个 JSON 对象，"
                                 "不要任何解释文字。字段：\n"
-                                '{"name":"物品名称","cat":"类别(衣物/工具/食品/日用/数码/书籍/其他)",'
-                                '"color":"颜色(黑/白/灰/红/蓝/绿/黄/米/粉/棕)","use":"用途(日常穿着/换季收纳/'
-                                '居家备用/维修工具/充电数码/纪念收藏/清洁日用/其他)","confidence":0到1的小数}\n'
+                                '{"name":"物品名称","cat":"类别，必须从这组里选一个：' + cat_hint + '",'
+                                '"color":"颜色(黑/白/灰/红/蓝/绿/黄/米/粉/棕)","use":"用途，必须从这组里选一个：' + use_hint + '",'
+                                '"confidence":0到1的小数}\n'
+                                "类别和用途必须严格从给定列表中选择，不要自造列表外的词。\n"
                                 "用途判断示例：雨伞/毛巾/纸巾→居家备用；螺丝刀/钳子→维修工具；充电器/数据线→充电数码；"
                                 "相册/纪念品→纪念收藏；羽绒服→换季收纳；T恤→日常穿着。\n"
                                 "如果无法辨认，name 填 未识别物品，其余字段给最合理猜测。"
